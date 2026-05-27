@@ -21,7 +21,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1450px;
+            max-width: 1500px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -104,7 +104,6 @@
     
     <div id="notifBar" class="notification"></div>
     
-    <!-- Input Form -->
     <div class="form-group" id="eqForm">
         <div>
             <label>PNR Number</label>
@@ -131,7 +130,7 @@
             <input type="date" id="jDate">
         </div>
         <div>
-            <label>Departure Time</label>
+            <label>Boarding Dep. Time</label>
             <input type="text" id="depTime" placeholder="e.g., 15:40">
         </div>
         <div>
@@ -147,6 +146,10 @@
             <input type="text" id="chartDiv" placeholder="e.g., MAS">
         </div>
         <div>
+            <label>Charting Dep. Time</label>
+            <input type="text" id="chartDepTime" placeholder="e.g., 15:40">
+        </div>
+        <div>
             <label>EQ Status</label>
             <select id="status">
                 <option value="Pending">⌛ Pending</option>
@@ -160,7 +163,6 @@
         </div>
     </div>
 
-    <!-- Data Table -->
     <table id="recordsTable">
         <thead>
             <tr>
@@ -169,19 +171,19 @@
                 <th>Origin Div</th>
                 <th>Boarding</th>
                 <th>Journey Date</th>
-                <th>Departure Time</th>
+                <th>Boarding Dep</th>
                 <th>Passenger</th>
                 <th>Charting Stn</th>
                 <th>Charting Div</th>
-                <th>Calculated Chart Prep Window</th>
+                <th>Charting Dep</th>
+                <th>Calculated Chart Prep Time</th>
                 <th>Official Live Status</th>
                 <th>Allocation State</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- Dynamic Content -->
-        </tbody>
+            </tbody>
     </table>
 </div>
 
@@ -208,6 +210,7 @@
             document.getElementById("passenger").value = params.get('passenger') || '';
             document.getElementById("chartStation").value = params.get('chartStation') || '';
             document.getElementById("chartDiv").value = params.get('chartDiv') || '';
+            document.getElementById("chartDepTime").value = params.get('chartDepTime') || '';
             
             addRequest();
             
@@ -223,21 +226,26 @@
         setTimeout(() => { bar.style.display = "none"; }, 5000);
     }
 
-    function calculateChartPrepTime(depTimeStr) {
-        if (!depTimeStr || depTimeStr === 'Not Set') return 'Awaiting Route Data';
-        const timeParts = depTimeStr.trim().split(':');
+    // CORRECTED OPERATIONAL CHART PREPARATION CALCULATOR ENGINE (BASED ON CHARTING STATION DEPARTURE)
+    function calculateChartPrepTime(chartDepTimeStr) {
+        if (!chartDepTimeStr || chartDepTimeStr === 'Not Set' || chartDepTimeStr === 'PENDING') return 'Awaiting Chart Dep Time';
+        
+        const timeParts = chartDepTimeStr.trim().split(':');
         if (timeParts.length < 2) return 'Invalid Format';
         
         const hours = parseInt(timeParts[0], 10);
         const minutes = parseInt(timeParts[1], 10);
         if (isNaN(hours) || isNaN(minutes)) return 'Invalid Data';
 
+        // RULE 1: Charting station departure is between 05:00 hrs and 14:00 hrs
         if (hours >= 5 && hours < 14) {
             return 'Prev Day by 21:00 hrs';
         }
         
+        // RULE 2: Charting station departure is between 14:00 hrs to 05:00 hrs (10 Hours Before Departure)
         let targetHours = hours - 10;
         let dayContext = 'Same Day';
+        
         if (targetHours < 0) {
             targetHours = 24 + targetHours;
             dayContext = 'Prev Day';
@@ -257,12 +265,13 @@
         const passenger = document.getElementById("passenger").value;
         const chartStation = document.getElementById("chartStation").value.toUpperCase();
         const chartDiv = document.getElementById("chartDiv").value.toUpperCase();
+        const chartDepTime = document.getElementById("chartDepTime").value;
         const status = document.getElementById("status").value;
 
         if (!pnr || pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
 
         const records = getRecords();
-        records.unshift({ pnr, trainNo, trainName, originDiv, bStation, jDate, depTime, passenger, chartStation, chartDiv, status });
+        records.unshift({ pnr, trainNo, trainName, originDiv, bStation, jDate, depTime, passenger, chartStation, chartDiv, chartDepTime, status });
         localStorage.setItem("eqRecords", JSON.stringify(records));
 
         clearForm();
@@ -280,6 +289,7 @@
         document.getElementById("passenger").value = '';
         document.getElementById("chartStation").value = '';
         document.getElementById("chartDiv").value = '';
+        document.getElementById("chartDepTime").value = '';
     }
 
     function checkPnrOfficialGov(pnrNum) {
@@ -320,7 +330,8 @@
         tbody.innerHTML = "";
 
         records.forEach((record, index) => {
-            const calculatedWindow = calculateChartPrepTime(record.depTime);
+            // Evaluates using record.chartDepTime strictly
+            const calculatedWindow = calculateChartPrepTime(record.chartDepTime);
             
             const row = `<tr>
                 <td><strong>${record.pnr}</strong></td>
@@ -332,6 +343,7 @@
                 <td>${record.passenger}</td>
                 <td><b>${record.chartStation || 'PENDING'}</b></td>
                 <td><span class="div-badge">${record.chartDiv || 'PENDING'}</span></td>
+                <td>⏱️ <b>${record.chartDepTime || 'PENDING'}</b></td>
                 <td style="color:#2e7d32; font-weight:bold;">📋 ${calculatedWindow}</td>
                 <td>
                     <button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov Status</button>
