@@ -21,7 +21,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1300px;
+            max-width: 1350px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -101,6 +101,8 @@
             display: inline-block;
             font-weight: bold;
             text-align: center;
+            border: none;
+            cursor: pointer;
         }
         .action-btn { background: #dc3545; color: white; padding: 5px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
     </style>
@@ -120,15 +122,15 @@
         </div>
         <div>
             <label>Train Number</label>
-            <input type="text" id="trainNo" placeholder="e.g., 12739">
+            <input type="text" id="trainNo" placeholder="e.g., 12605">
         </div>
         <div>
             <label>Train Name</label>
-            <input type="text" id="trainName" placeholder="e.g., GARIB RATH">
+            <input type="text" id="trainName" placeholder="e.g., Pallavan Exp">
         </div>
         <div>
             <label>Boarding Station Code</label>
-            <input type="text" id="bStation" placeholder="e.g., DVD">
+            <input type="text" id="bStation" placeholder="e.g., MS">
         </div>
         <div>
             <label>Journey Date</label>
@@ -139,8 +141,8 @@
             <input type="text" id="passenger" placeholder="Name">
         </div>
         <div>
-            <label>Chart Prep Time</label>
-            <input type="time" id="chartTime">
+            <label>IRCTC Check Date</label>
+            <input type="date" id="irctcDate">
         </div>
         <div>
             <label>EQ Status</label>
@@ -165,8 +167,8 @@
                 <th>Boarding</th>
                 <th>Journey Date</th>
                 <th>Passenger</th>
-                <th>Chart Target</th>
-                <th>IRCTC Charts</th>
+                <th>IRCTC Target Date</th>
+                <th>IRCTC Charts Portal Lookup</th>
                 <th>Live Status</th>
                 <th>Allocation State</th>
                 <th>Action</th>
@@ -191,15 +193,28 @@
     function parseUrlParameters() {
         const params = new URLSearchParams(window.location.search);
         if (params.has('pnr')) {
-            document.getElementById("pnr").value = params.get('pnr') || '';
-            document.getElementById("trainNo").value = params.get('trainNo') || '';
-            document.getElementById("trainName").value = params.get('trainName') || '';
-            document.getElementById("bStation").value = params.get('bStation') || '';
-            document.getElementById("jDate").value = params.get('jDate') || '';
-            document.getElementById("passenger").value = params.get('passenger') || '';
-            document.getElementById("chartTime").value = params.get('chart') || '';
+            const pnr = params.get('pnr') || '';
+            const trainNo = params.get('trainNo') || '';
+            const trainName = params.get('trainName') || '';
+            const bStation = params.get('bStation') || '';
+            const jDate = params.get('jDate') || '';
+            const passenger = params.get('passenger') || '';
             
-            // AUTOMATIC ONE-CLICK LOGGING ACTION
+            document.getElementById("pnr").value = pnr;
+            document.getElementById("trainNo").value = trainNo;
+            document.getElementById("trainName").value = trainName;
+            document.getElementById("bStation").value = bStation;
+            document.getElementById("jDate").value = jDate;
+            document.getElementById("passenger").value = passenger;
+
+            // CALCULATE PREVIOUS DAY DYNAMICALLY FOR THE IRCTC LOOKUP FIELD
+            if (jDate) {
+                const dateObj = new Date(jDate);
+                dateObj.setDate(dateObj.getDate() - 1);
+                const prevDayStr = dateObj.toISOString().split('T')[0];
+                document.getElementById("irctcDate").value = prevDayStr;
+            }
+            
             addRequest();
             
             showNotification("Successfully logged dynamic entry from chat!");
@@ -221,13 +236,13 @@
         const bStation = document.getElementById("bStation").value.toUpperCase();
         const jDate = document.getElementById("jDate").value;
         const passenger = document.getElementById("passenger").value;
-        const chartTime = document.getElementById("chartTime").value || 'Not Set';
+        const irctcDate = document.getElementById("irctcDate").value;
         const status = document.getElementById("status").value;
 
         if (!pnr || pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
 
         const records = getRecords();
-        records.unshift({ pnr, trainNo, trainName, bStation, jDate, passenger, chartTime, status });
+        records.unshift({ pnr, trainNo, trainName, bStation, jDate, passenger, irctcDate, status });
         localStorage.setItem("eqRecords", JSON.stringify(records));
 
         clearForm();
@@ -241,7 +256,7 @@
         document.getElementById("bStation").value = '';
         document.getElementById("jDate").value = '';
         document.getElementById("passenger").value = '';
-        document.getElementById("chartTime").value = '';
+        document.getElementById("irctcDate").value = '';
     }
 
     function checkPnrLive(pnrNum) {
@@ -251,8 +266,17 @@
         });
     }
 
-    function openIrctcCharts(trainNo, bStation) {
-        alert("Redirecting to IRCTC Online Charts.\nUse Train: " + trainNo + "\nBoarding: " + bStation);
+    // HELPER FORMATTER TO CONVERT YYYY-MM-DD TO DD-MM-YYYY FOR IRCTC MANUAL SYSTEM
+    function formatDateToIndian(dateStr) {
+        if(!dateStr) return "N/A";
+        const parts = dateStr.split('-');
+        if(parts.length !== 3) return dateStr;
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    function openIrctcCharts(trainNo, bStation, irctcDate) {
+        const displayDate = formatDateToIndian(irctcDate);
+        alert("REDIRECTING TO OFFICIAL IRCTC CHARTS\n\nUse these parameters to lookup:\n• Train Number: " + trainNo + "\n• Boarding Station: " + bStation + "\n• Journey Date: " + displayDate);
         window.open("https://www.irctc.co.in/online-charts/", "_blank");
     }
 
@@ -278,15 +302,16 @@
         tbody.innerHTML = "";
 
         records.forEach((record, index) => {
+            const displayTargetDate = formatDateToIndian(record.irctcDate);
             const row = `<tr>
                 <td><strong>${record.pnr}</strong></td>
                 <td><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
                 <td><mark><b>${record.bStation || 'N/A'}</b></mark></td>
-                <td>${record.jDate}</td>
+                <td>${formatDateToIndian(record.jDate)}</td>
                 <td>${record.passenger}</td>
-                <td>⏰ ${record.chartTime}</td>
+                <td>📅 <b style="color:var(--irctc-color);">${displayTargetDate}</b></td>
                 <td>
-                    <button class="irctc-btn" onclick="openIrctcCharts('${record.trainNo}', '${record.bStation}')">🌐 IRCTC Charts</button>
+                    <button class="irctc-btn" onclick="openIrctcCharts('${record.trainNo}', '${record.bStation}', '${record.irctcDate}')">🌐 Open Chart Details</button>
                 </td>
                 <td>
                     <button class="chk-btn" onclick="checkPnrLive('${record.pnr}')">⚡ Verify Status</button>
