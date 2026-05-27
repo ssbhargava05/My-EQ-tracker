@@ -12,6 +12,7 @@
             --border: #ccc;
             --accent: #e67e22;
             --erail-color: #d32f2f;
+            --gov-color: #0d47a1;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -84,7 +85,7 @@
             font-size: 12px;
         }
         .chk-btn {
-            background-color: var(--accent);
+            background-color: var(--gov-color);
             color: white;
             padding: 4px 6px;
             border-radius: 4px;
@@ -114,6 +115,7 @@
     
     <div id="notifBar" class="notification"></div>
     
+    <!-- Input Form -->
     <div class="form-group" id="eqForm">
         <div>
             <label>PNR Number</label>
@@ -140,6 +142,10 @@
             <input type="date" id="jDate">
         </div>
         <div>
+            <label>Departure Time</label>
+            <input type="text" id="depTime" placeholder="e.g., 15:40">
+        </div>
+        <div>
             <label>Passenger Name</label>
             <input type="text" id="passenger" placeholder="Passenger Name">
         </div>
@@ -150,10 +156,6 @@
         <div>
             <label>Charting Division</label>
             <input type="text" id="chartDiv" placeholder="e.g., MAS">
-        </div>
-        <div>
-            <label>Charting Dep. Time</label>
-            <input type="text" id="chartDepTime" placeholder="e.g., 15:40">
         </div>
         <div>
             <label>EQ Status</label>
@@ -169,6 +171,7 @@
         </div>
     </div>
 
+    <!-- Data Table -->
     <table id="recordsTable">
         <thead>
             <tr>
@@ -177,19 +180,20 @@
                 <th>Origin Div</th>
                 <th>Boarding</th>
                 <th>Journey Date</th>
+                <th>Departure Time</th>
                 <th>Passenger</th>
                 <th>Charting Stn</th>
                 <th>Charting Div</th>
-                <th>Charting Dep. Time</th>
                 <th>Calculated Chart Prep Window</th>
-                <th>Verification</th>
-                <th>Live Status</th>
+                <th>Route Verification</th>
+                <th>Official Live Status</th>
                 <th>Allocation State</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            </tbody>
+            <!-- Dynamic Content -->
+        </tbody>
     </table>
 </div>
 
@@ -212,10 +216,10 @@
             document.getElementById("originDiv").value = params.get('originDiv') || '';
             document.getElementById("bStation").value = params.get('bStation') || '';
             document.getElementById("jDate").value = params.get('jDate') || '';
+            document.getElementById("depTime").value = params.get('depTime') || '';
             document.getElementById("passenger").value = params.get('passenger') || '';
             document.getElementById("chartStation").value = params.get('chartStation') || '';
             document.getElementById("chartDiv").value = params.get('chartDiv') || '';
-            document.getElementById("chartDepTime").value = params.get('chartDepTime') || '';
             
             addRequest();
             
@@ -240,12 +244,10 @@
         const minutes = parseInt(timeParts[1], 10);
         if (isNaN(hours) || isNaN(minutes)) return 'Invalid Data';
 
-        // Rule 1: Departure between 05:00 hrs and 14:00 hrs
         if (hours >= 5 && hours < 14) {
             return 'Prev Day by 21:00 hrs';
         }
         
-        // Rule 2: Departure between 14:00 hrs and 05:00 hrs (10 Hours Prior)
         let targetHours = hours - 10;
         let dayContext = 'Same Day';
         if (targetHours < 0) {
@@ -263,16 +265,16 @@
         const originDiv = document.getElementById("originDiv").value.toUpperCase();
         const bStation = document.getElementById("bStation").value.toUpperCase();
         const jDate = document.getElementById("jDate").value;
+        const depTime = document.getElementById("depTime").value;
         const passenger = document.getElementById("passenger").value;
         const chartStation = document.getElementById("chartStation").value.toUpperCase();
         const chartDiv = document.getElementById("chartDiv").value.toUpperCase();
-        const chartDepTime = document.getElementById("chartDepTime").value || 'Not Set';
         const status = document.getElementById("status").value;
 
         if (!pnr || pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
 
         const records = getRecords();
-        records.unshift({ pnr, trainNo, trainName, originDiv, bStation, jDate, passenger, chartStation, chartDiv, chartDepTime, status });
+        records.unshift({ pnr, trainNo, trainName, originDiv, bStation, jDate, depTime, passenger, chartStation, chartDiv, status });
         localStorage.setItem("eqRecords", JSON.stringify(records));
 
         clearForm();
@@ -286,16 +288,21 @@
         document.getElementById("originDiv").value = '';
         document.getElementById("bStation").value = '';
         document.getElementById("jDate").value = '';
+        document.getElementById("depTime").value = '';
         document.getElementById("passenger").value = '';
         document.getElementById("chartStation").value = '';
         document.getElementById("chartDiv").value = '';
-        document.getElementById("chartDepTime").value = '';
     }
 
-    function checkPnrLive(pnrNum) {
+    // REDIRECTS NATIVELY TO THE OFFICIAL INDIAN RAILWAYS GATEWAY SYSTEM WITH AUTOMATIC CLIPBOARD ASSIGNMENT
+    function checkPnrOfficialGov(pnrNum) {
         navigator.clipboard.writeText(pnrNum).then(() => {
-            alert("PNR " + pnrNum + " copied to clipboard!");
-            window.open("https://www.confirmtkt.com/pnr-status/" + pnrNum, "_blank");
+            alert("PNR " + pnrNum + " copied to clipboard!\n\nOpening official Indian Railways Enquiry portal. Simply paste (Ctrl+V) the number into the verification box.");
+            window.open("https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html?locale=en", "_blank");
+        }).catch(err => {
+            // Fallback strategy if clipboard permissions are blocked by the browser context
+            alert("Opening official Indian Railways portal.\nYour target PNR is: " + pnrNum);
+            window.open("https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html?locale=en", "_blank");
         });
     }
 
@@ -321,7 +328,6 @@
         if(confirm("Permanently delete this entry?")) {
             const records = getRecords();
             records.splice(index, 1);
-            localStorage.setItem("localStorage Keys", JSON.stringify(records));
             localStorage.setItem("eqRecords", JSON.stringify(records));
             displayRecords();
         }
@@ -333,7 +339,7 @@
         tbody.innerHTML = "";
 
         records.forEach((record, index) => {
-            const calculatedWindow = calculateChartPrepTime(record.chartDepTime);
+            const calculatedWindow = calculateChartPrepTime(record.depTime);
             
             const row = `<tr>
                 <td><strong>${record.pnr}</strong></td>
@@ -341,16 +347,16 @@
                 <td><span class="div-badge">${record.originDiv || 'N/A'}</span></td>
                 <td><b>${record.bStation || 'N/A'}</b></td>
                 <td>${formatDateToIndian(record.jDate)}</td>
+                <td>⏱️ <b>${record.depTime || 'N/A'}</b></td>
                 <td>${record.passenger}</td>
                 <td><b>${record.chartStation || 'PENDING'}</b></td>
                 <td><span class="div-badge">${record.chartDiv || 'PENDING'}</span></td>
-                <td>⏱️ <b>${record.chartDepTime}</b></td>
                 <td style="color:#2e7d32; font-weight:bold;">📋 ${calculatedWindow}</td>
                 <td>
                     <button class="erail-btn" onclick="openErailEnquiry('${record.trainNo}')">🔍 eRail</button>
                 </td>
                 <td>
-                    <button class="chk-btn" onclick="checkPnrLive('${record.pnr}')">⚡ PNR</button>
+                    <button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov Status</button>
                 </td>
                 <td>
                     <select class="status-select" onchange="updateStatus(${index}, this.value)">
