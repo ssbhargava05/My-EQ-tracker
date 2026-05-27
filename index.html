@@ -12,6 +12,7 @@
             --border: #ccc;
             --accent: #e67e22;
             --gov-color: #0d47a1;
+            --cloud-color: #43a047;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -95,15 +96,22 @@
         }
         .action-btn { background: #dc3545; color: white; padding: 4px 6px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; }
         .div-badge { background: #e0f2f1; color: #004d40; padding: 2px 4px; border-radius: 3px; font-weight: bold; font-size: 11px; }
+        .sync-indicator { font-size: 11px; color: var(--cloud-color); font-weight: bold; float: right; margin-top: 5px;}
     </style>
+
+    <!-- FIREBASE PLATFORM CLIENT SDK MODULES -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
 <div class="container">
-    <h2>EQ Request Master Compilation & Operational Tracker</h2>
+    <span class="sync-indicator">🟢 Real-Time Cloud Sync Active</span>
+    <h2>EQ Request Master Compilation & Real-Time Cloud Tracker</h2>
     
     <div id="notifBar" class="notification"></div>
     
+    <!-- Input Form -->
     <div class="form-group" id="eqForm">
         <div>
             <label>PNR Number</label>
@@ -159,10 +167,11 @@
         </div>
         <div class="btn-panel">
             <button class="btn-clear" onclick="clearForm()">Clear Fields</button>
-            <button onclick="addRequest()">Log & Save Request</button>
+            <button onclick="handleManualSubmit()">Log & Save Request</button>
         </div>
     </div>
 
+    <!-- Data Table -->
     <table id="recordsTable">
         <thead>
             <tr>
@@ -184,118 +193,179 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            </tbody>
+            <!-- Cloud Synchronized Rows -->
+        </tbody>
     </table>
 </div>
 
 <script>
+    // YOUR COPIED CONFIGURATION KEYS LINKED DIRECTLY TO YOUR SERVER INSTANCE
+    const firebaseConfig = {
+        apiKey: "AIzaSyCkNA0lawZPrHMg59whHSgIji3ulXq_Wmg",
+        authDomain: "eq-tracker-83c3c.firebaseapp.com",
+        databaseURL: "https://eq-tracker-83c3c-default-rtdb.firebaseio.com",
+        projectId: "eq-tracker-83c3c",
+        storageBucket: "eq-tracker-83c3c.firebasestorage.app",
+        messagingSenderId: "788786262975",
+        appId: "1:788786262975:web:15a8dd05887271adcf670a",
+        measurementId: "G-XV1MH0Z1HC"
+    };
+
+    // Initialize Connection Framework
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     document.addEventListener("DOMContentLoaded", () => {
         parseUrlParameters();
-        displayRecords();
+        listenToCloudSync();
     });
-
-    function getRecords() {
-        return JSON.parse(localStorage.getItem("eqRecords")) || [];
-    }
 
     function parseUrlParameters() {
         const params = new URLSearchParams(window.location.search);
         if (params.has('pnr')) {
-            document.getElementById("pnr").value = params.get('pnr') || '';
-            document.getElementById("trainNo").value = params.get('trainNo') || '';
-            document.getElementById("trainName").value = params.get('trainName') || '';
-            document.getElementById("originDiv").value = params.get('originDiv') || '';
-            document.getElementById("bStation").value = params.get('bStation') || '';
-            document.getElementById("jDate").value = params.get('jDate') || '';
-            document.getElementById("depTime").value = params.get('depTime') || '';
-            document.getElementById("passenger").value = params.get('passenger') || '';
-            document.getElementById("chartStation").value = params.get('chartStation') || '';
-            document.getElementById("chartDiv").value = params.get('chartDiv') || '';
-            document.getElementById("chartDepTime").value = params.get('chartDepTime') || '';
+            const record = {
+                pnr: params.get('pnr') || '',
+                trainNo: params.get('trainNo') || '',
+                trainName: params.get('trainName') || '',
+                originDiv: params.get('originDiv') || '',
+                bStation: params.get('bStation') || '',
+                jDate: params.get('jDate') || '',
+                depTime: params.get('depTime') || '',
+                passenger: params.get('passenger') || '',
+                chartStation: params.get('chartStation') || '',
+                chartDiv: params.get('chartDiv') || '',
+                chartDepTime: params.get('chartDepTime') || '',
+                status: 'Pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
             
-            addRequest();
-            
-            showNotification("Successfully logged dynamic entry from chat!");
+            if (record.pnr.length === 10) {
+                db.collection("eq_requests").doc(record.pnr).set(record)
+                .then(() => {
+                    showNotification("Successfully synced dynamic entry to the Cloud stream!");
+                }).catch(err => console.error("Write error: ", err));
+            }
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
 
-    function showNotification(msg) {
-        const bar = document.getElementById("notifBar");
-        bar.innerText = msg;
-        bar.style.display = "block";
-        setTimeout(() => { bar.style.display = "none"; }, 5000);
+    function listenToCloudSync() {
+        db.collection("eq_requests").orderBy("timestamp", "desc")
+        .onSnapshot((snapshot) => {
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+            let idx = 1;
+            
+            snapshot.forEach((doc) => {
+                const record = doc.data();
+                const calculatedWindow = calculateChartPrepTime(record.chartDepTime);
+                
+                const row = `<tr>
+                    <td style="text-align: center; font-weight: bold; color: #555;">${idx++}</td>
+                    <td><strong>${record.pnr}</strong></td>
+                    <td><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
+                    <td><span class="div-badge">${record.originDiv || 'N/A'}</span></td>
+                    <td><b>${record.bStation || 'N/A'}</b></td>
+                    <td>${formatDateToIndian(record.jDate)}</td>
+                    <td>⏱️ <b>${record.depTime || 'N/A'}</b></td>
+                    <td>${record.passenger}</td>
+                    <td><b>${record.chartStation || 'PENDING'}</b></td>
+                    <td><span class="div-badge">${record.chartDiv || 'PENDING'}</span></td>
+                    <td>⏱️ <b>${record.chartDepTime || 'PENDING'}</b></td>
+                    <td style="color:#2e7d32; font-weight:bold;">📋 ${calculatedWindow}</td>
+                    <td>
+                        <button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov Status</button>
+                    </td>
+                    <td>
+                        <select class="status-select" onchange="updateCloudStatus('${record.pnr}', this.value)">
+                            <option value="Pending" ${record.status === 'Pending' ? 'selected' : ''}>⌛ Pending</option>
+                            <option value="Confirmed" ${record.status === 'Confirmed' ? 'selected' : ''}>✅ Confirmed</option>
+                            <option value="Regret" ${record.status === 'Regret' ? 'selected' : ''}>❌ Regret</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="action-btn" onclick="deleteCloudRecord('${record.pnr}')">Delete</button>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }, (error) => {
+            console.error("Cloud listener error: ", error);
+        });
+    }
+
+    function handleManualSubmit() {
+        const pnr = document.getElementById("pnr").value;
+        if (pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
+
+        const record = {
+            pnr: pnr,
+            trainNo: document.getElementById("trainNo").value,
+            trainName: document.getElementById("trainName").value,
+            originDiv: document.getElementById("originDiv").value.toUpperCase(),
+            bStation: document.getElementById("bStation").value.toUpperCase(),
+            jDate: document.getElementById("jDate").value,
+            depTime: document.getElementById("depTime").value,
+            passenger: document.getElementById("passenger").value,
+            chartStation: document.getElementById("chartStation").value.toUpperCase(),
+            chartDiv: document.getElementById("chartDiv").value.toUpperCase(),
+            chartDepTime: document.getElementById("chartDepTime").value,
+            status: document.getElementById("status").value,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        db.collection("eq_requests").doc(pnr).set(record).then(() => {
+            clearForm();
+            showNotification("Manual entry saved to cloud.");
+        });
+    }
+
+    function updateCloudStatus(pnr, newStatus) {
+        db.collection("eq_requests").doc(pnr).update({ status: newStatus });
+    }
+
+    // HANDLES INSTANT REMOVAL ACROSS ALL ONLINE INSTANCES
+    function deleteCloudRecord(pnr) {
+        if (confirm("Permanently delete this cloud entry?")) {
+            db.collection("eq_requests").doc(pnr).delete();
+        }
     }
 
     function calculateChartPrepTime(chartDepTimeStr) {
         if (!chartDepTimeStr || chartDepTimeStr === 'Not Set' || chartDepTimeStr === 'PENDING') return 'Awaiting Chart Dep Time';
-        
         const timeParts = chartDepTimeStr.trim().split(':');
         if (timeParts.length < 2) return 'Invalid Format';
         
         const hours = parseInt(timeParts[0], 10);
         const minutes = parseInt(timeParts[1], 10);
-        if (isNaN(hours) || isNaN(minutes)) return 'Invalid Data';
-
+        
+        // RULE 1: Charting station departure is between 05:00 hrs and 14:00 hrs
         if (hours >= 5 && hours < 14) {
             return 'Prev Day by 21:00 hrs';
         }
         
+        // RULE 2: Charting station departure is between 14:00 hrs to 05:00 hrs (10 Hours Before)
         let targetHours = hours - 10;
         let dayContext = 'Same Day';
-        
         if (targetHours < 0) {
             targetHours = 24 + targetHours;
             dayContext = 'Prev Day';
         }
-        
         return `${dayContext} at ${String(targetHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} hrs`;
     }
 
-    function addRequest() {
-        const pnr = document.getElementById("pnr").value;
-        const trainNo = document.getElementById("trainNo").value;
-        const trainName = document.getElementById("trainName").value;
-        const originDiv = document.getElementById("originDiv").value.toUpperCase();
-        const bStation = document.getElementById("bStation").value.toUpperCase();
-        const jDate = document.getElementById("jDate").value;
-        const depTime = document.getElementById("depTime").value;
-        const passenger = document.getElementById("passenger").value;
-        const chartStation = document.getElementById("chartStation").value.toUpperCase();
-        const chartDiv = document.getElementById("chartDiv").value.toUpperCase();
-        const chartDepTime = document.getElementById("chartDepTime").value;
-        const status = document.getElementById("status").value;
-
-        if (!pnr || pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
-
-        const records = getRecords();
-        records.unshift({ pnr, trainNo, trainName, originDiv, bStation, jDate, depTime, passenger, chartStation, chartDiv, chartDepTime, status });
-        localStorage.setItem("eqRecords", JSON.stringify(records));
-
-        clearForm();
-        displayRecords();
-    }
-
     function clearForm() {
-        document.getElementById("pnr").value = '';
-        document.getElementById("trainNo").value = '';
-        document.getElementById("trainName").value = '';
-        document.getElementById("originDiv").value = '';
-        document.getElementById("bStation").value = '';
-        document.getElementById("jDate").value = '';
-        document.getElementById("depTime").value = '';
-        document.getElementById("passenger").value = '';
-        document.getElementById("chartStation").value = '';
-        document.getElementById("chartDiv").value = '';
+        document.getElementById("pnr").value = ''; document.getElementById("trainNo").value = '';
+        document.getElementById("trainName").value = ''; document.getElementById("originDiv").value = '';
+        document.getElementById("bStation").value = ''; document.getElementById("jDate").value = '';
+        document.getElementById("depTime").value = ''; document.getElementById("passenger").value = '';
+        document.getElementById("chartStation").value = ''; document.getElementById("chartDiv").value = '';
         document.getElementById("chartDepTime").value = '';
     }
 
     function checkPnrOfficialGov(pnrNum) {
         navigator.clipboard.writeText(pnrNum).then(() => {
             alert("PNR " + pnrNum + " copied to clipboard!\n\nOpening official Indian Railways Enquiry portal. Simply paste (Ctrl+V) the number into the verification box.");
-            window.open("https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html?locale=en", "_blank");
-        }).catch(err => {
-            alert("Opening official Indian Railways portal.\nYour target PNR is: " + pnrNum);
             window.open("https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html?locale=en", "_blank");
         });
     }
@@ -306,59 +376,10 @@
         return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : dateStr;
     }
 
-    function updateStatus(index, newStatus) {
-        const records = getRecords();
-        records[index].status = newStatus;
-        localStorage.setItem("eqRecords", JSON.stringify(records));
-        displayRecords();
-    }
-
-    function deleteRecord(index) {
-        if(confirm("Permanently delete this entry?")) {
-            const records = getRecords();
-            records.splice(index, 1);
-            localStorage.setItem("eqRecords", JSON.stringify(records));
-            displayRecords();
-        }
-    }
-
-    function displayRecords() {
-        const records = getRecords();
-        const tbody = document.getElementById("tableBody");
-        tbody.innerHTML = "";
-
-        records.forEach((record, index) => {
-            const calculatedWindow = calculateChartPrepTime(record.chartDepTime);
-            
-            const row = `<tr>
-                <td style="text-align: center; font-weight: bold; color: #555;">${index + 1}</td>
-                <td><strong>${record.pnr}</strong></td>
-                <td><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
-                <td><span class="div-badge">${record.originDiv || 'N/A'}</span></td>
-                <td><b>${record.bStation || 'N/A'}</b></td>
-                <td>${formatDateToIndian(record.jDate)}</td>
-                <td>⏱️ <b>${record.depTime || 'N/A'}</b></td>
-                <td>${record.passenger}</td>
-                <td><b>${record.chartStation || 'PENDING'}</b></td>
-                <td><span class="div-badge">${record.chartDiv || 'PENDING'}</span></td>
-                <td>⏱️ <b>${record.chartDepTime || 'PENDING'}</b></td>
-                <td style="color:#2e7d32; font-weight:bold;">📋 ${calculatedWindow}</td>
-                <td>
-                    <button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov Status</button>
-                </td>
-                <td>
-                    <select class="status-select" onchange="updateStatus(${index}, this.value)">
-                        <option value="Pending" ${record.status === 'Pending' ? 'selected' : ''}>⌛ Pending</option>
-                        <option value="Confirmed" ${record.status === 'Confirmed' ? 'selected' : ''}>✅ Confirmed</option>
-                        <option value="Regret" ${record.status === 'Regret' ? 'selected' : ''}>❌ Regret</option>
-                    </select>
-                </td>
-                <td>
-                    <button class="action-btn" onclick="deleteRecord(${index})">Delete</button>
-                </td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
+    function showNotification(msg) {
+        const bar = document.getElementById("notifBar");
+        bar.innerText = msg; bar.style.display = "block";
+        setTimeout(() => { bar.style.display = "none"; }, 5000);
     }
 </script>
 </body>
