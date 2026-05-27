@@ -10,6 +10,8 @@
             --secondary: #f4f6f9;
             --text: #333;
             --border: #ccc;
+            --accent: #e67e22;
+            --irctc-color: #2e7d32;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -19,7 +21,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1100px;
+            max-width: 1300px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -27,9 +29,20 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 8px; }
+        
+        .notification {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: none;
+            font-weight: bold;
+        }
+
         .form-group {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
             background: #f9f9f9;
@@ -37,8 +50,15 @@
             border-radius: 6px;
             border: 1px solid var(--border);
         }
-        label { font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block; }
+        label { font-weight: bold; font-size: 13px; margin-bottom: 5px; display: block; }
         input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px; }
+        
+        .btn-panel {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
         button {
             background-color: var(--primary);
             color: white;
@@ -47,40 +67,68 @@
             font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
-            grid-column: 1 / -1;
-            justify-self: end;
         }
         button:hover { opacity: 0.9; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
-        th, td { padding: 12px; border-bottom: 1px solid var(--border); }
+        .btn-clear { background-color: #7f8c8d; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; font-size: 13px; }
+        th, td { padding: 10px; border-bottom: 1px solid var(--border); }
         th { background-color: var(--primary); color: white; }
         tr:hover { background-color: #f1f1f1; }
-        .status-badge {
-            padding: 4px 8px;
+        
+        .status-select {
+            padding: 4px;
             border-radius: 4px;
-            font-size: 12px;
             font-weight: bold;
         }
-        .status-pending { background: #ffeeba; color: #856404; }
-        .status-confirmed { background: #c3e6cb; color: #155724; }
-        .status-regret { background: #f5c6cb; color: #721c24; }
-        .action-btn { background: #dc3545; color: white; padding: 4px 8px; font-size: 12px; }
+        .chk-btn {
+            background-color: var(--accent);
+            color: white;
+            padding: 5px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .irctc-btn {
+            background-color: var(--irctc-color);
+            color: white;
+            padding: 5px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            text-align: center;
+        }
+        .action-btn { background: #dc3545; color: white; padding: 5px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>EQ Request Master Compilation</h2>
+    <h2>EQ Request Master Compilation & Operational Tracker</h2>
+    
+    <div id="notifBar" class="notification"></div>
     
     <!-- Input Form -->
     <div class="form-group" id="eqForm">
         <div>
             <label>PNR Number</label>
-            <input type="text" id="pnr" placeholder="e.g., 6832357861">
+            <input type="text" id="pnr" maxlength="10" placeholder="10 digit PNR">
         </div>
         <div>
-            <label>Train Details</label>
-            <input type="text" id="train" placeholder="e.g., 12792 / SECUNDERABAD EX">
+            <label>Train Number</label>
+            <input type="text" id="trainNo" placeholder="e.g., 12739">
+        </div>
+        <div>
+            <label>Train Name</label>
+            <input type="text" id="trainName" placeholder="e.g., GARIB RATH">
+        </div>
+        <div>
+            <label>Boarding Station Code</label>
+            <input type="text" id="bStation" placeholder="e.g., DVD">
         </div>
         <div>
             <label>Journey Date</label>
@@ -91,14 +139,21 @@
             <input type="text" id="passenger" placeholder="Name">
         </div>
         <div>
+            <label>Chart Prep Time</label>
+            <input type="time" id="chartTime">
+        </div>
+        <div>
             <label>EQ Status</label>
             <select id="status">
                 <option value="Pending">⌛ Pending</option>
                 <option value="Confirmed">✅ Confirmed</option>
-                <option value="Regret">❌ Regret / WL</option>
+                <option value="Regret">❌ Regret</option>
             </select>
         </div>
-        <button onclick="addRequest()">Log Request</button>
+        <div class="btn-panel">
+            <button class="btn-clear" onclick="clearForm()">Clear Fields</button>
+            <button onclick="addRequest()">Log & Save Request</button>
+        </div>
     </div>
 
     <!-- Data Table -->
@@ -107,46 +162,96 @@
             <tr>
                 <th>PNR</th>
                 <th>Train Details</th>
+                <th>Boarding</th>
                 <th>Journey Date</th>
                 <th>Passenger</th>
-                <th>Status</th>
+                <th>Chart Target</th>
+                <th>IRCTC Charts</th>
+                <th>Live Status</th>
+                <th>Allocation State</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- Dynamic Rows Go Here -->
+            <!-- Dynamic Content -->
         </tbody>
     </table>
 </div>
 
 <script>
-    // Load existing records from local storage on startup
-    document.addEventListener("DOMContentLoaded", displayRecords);
+    document.addEventListener("DOMContentLoaded", () => {
+        parseUrlParameters();
+        displayRecords();
+    });
 
     function getRecords() {
         return JSON.parse(localStorage.getItem("eqRecords")) || [];
     }
 
+    function parseUrlParameters() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('pnr')) {
+            document.getElementById("pnr").value = params.get('pnr') || '';
+            document.getElementById("trainNo").value = params.get('trainNo') || '';
+            document.getElementById("trainName").value = params.get('trainName') || '';
+            document.getElementById("bStation").value = params.get('bStation') || '';
+            document.getElementById("jDate").value = params.get('jDate') || '';
+            document.getElementById("passenger").value = params.get('passenger') || '';
+            document.getElementById("chartTime").value = params.get('chart') || '';
+            
+            showNotification("Data loaded dynamically from request! Review details and click 'Log & Save Request'.");
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    function showNotification(msg) {
+        const bar = document.getElementById("notifBar");
+        bar.innerText = msg;
+        bar.style.display = "block";
+        setTimeout(() => { bar.style.display = "none"; }, 5000);
+    }
+
     function addRequest() {
         const pnr = document.getElementById("pnr").value;
-        const train = document.getElementById("train").value;
+        const trainNo = document.getElementById("trainNo").value;
+        const trainName = document.getElementById("trainName").value;
+        const bStation = document.getElementById("bStation").value.toUpperCase();
         const jDate = document.getElementById("jDate").value;
         const passenger = document.getElementById("passenger").value;
+        const chartTime = document.getElementById("chartTime").value || 'Not Set';
         const status = document.getElementById("status").value;
 
-        if (!pnr) { alert("PNR is required"); return; }
+        if (!pnr || pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
 
         const records = getRecords();
-        records.push({ pnr, train, jDate, passenger, status });
+        records.unshift({ pnr, trainNo, trainName, bStation, jDate, passenger, chartTime, status });
         localStorage.setItem("eqRecords", JSON.stringify(records));
 
-        // Clear input fields
+        clearForm();
+        displayRecords();
+        showNotification("Record stored successfully.");
+    }
+
+    function clearForm() {
         document.getElementById("pnr").value = '';
-        document.getElementById("train").value = '';
+        document.getElementById("trainNo").value = '';
+        document.getElementById("trainName").value = '';
+        document.getElementById("bStation").value = '';
         document.getElementById("jDate").value = '';
         document.getElementById("passenger").value = '';
+        document.getElementById("chartTime").value = '';
+    }
 
-        displayRecords();
+    function checkPnrLive(pnrNum) {
+        navigator.clipboard.writeText(pnrNum).then(() => {
+            alert("PNR " + pnrNum + " copied to clipboard! Opening verification portal...");
+            window.open("https://www.confirmtkt.com/pnr-status/" + pnrNum, "_blank");
+        });
+    }
+
+    function openIrctcCharts(trainNo, bStation) {
+        alert("Redirecting to IRCTC Online Charts.\nUse Train: " + trainNo + "\nBoarding: " + bStation);
+        window.open("https://www.irctc.co.in/online-charts/", "_blank");
     }
 
     function updateStatus(index, newStatus) {
@@ -157,7 +262,7 @@
     }
 
     function deleteRecord(index) {
-        if(confirm("Are you sure you want to delete this log?")) {
+        if(confirm("Permanently delete this entry?")) {
             const records = getRecords();
             records.splice(index, 1);
             localStorage.setItem("eqRecords", JSON.stringify(records));
@@ -171,17 +276,21 @@
         tbody.innerHTML = "";
 
         records.forEach((record, index) => {
-            let badgeClass = "status-pending";
-            if (record.status === "Confirmed") badgeClass = "status-confirmed";
-            if (record.status === "Regret") badgeClass = "status-regret";
-
             const row = `<tr>
                 <td><strong>${record.pnr}</strong></td>
-                <td>${record.train}</td>
+                <td><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
+                <td><mark><b>${record.bStation || 'N/A'}</b></mark></td>
                 <td>${record.jDate}</td>
                 <td>${record.passenger}</td>
+                <td>⏰ ${record.chartTime}</td>
                 <td>
-                    <select onchange="updateStatus(${index}, this.value)">
+                    <button class="irctc-btn" onclick="openIrctcCharts('${record.trainNo}', '${record.bStation}')">🌐 IRCTC Charts</button>
+                </td>
+                <td>
+                    <button class="chk-btn" onclick="checkPnrLive('${record.pnr}')">⚡ Verify Status</button>
+                </td>
+                <td>
+                    <select class="status-select" onchange="updateStatus(${index}, this.value)">
                         <option value="Pending" ${record.status === 'Pending' ? 'selected' : ''}>⌛ Pending</option>
                         <option value="Confirmed" ${record.status === 'Confirmed' ? 'selected' : ''}>✅ Confirmed</option>
                         <option value="Regret" ${record.status === 'Regret' ? 'selected' : ''}>❌ Regret</option>
