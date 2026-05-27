@@ -11,7 +11,6 @@
             --text: #333;
             --border: #ccc;
             --accent: #e67e22;
-            --erail-color: #d32f2f;
             --gov-color: #0d47a1;
         }
         body {
@@ -22,7 +21,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1500px;
+            max-width: 1450px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -86,16 +85,6 @@
         }
         .chk-btn {
             background-color: var(--gov-color);
-            color: white;
-            padding: 4px 6px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 11px;
-        }
-        .erail-btn {
-            background-color: var(--erail-color);
             color: white;
             padding: 4px 6px;
             border-radius: 4px;
@@ -185,7 +174,6 @@
                 <th>Charting Stn</th>
                 <th>Charting Div</th>
                 <th>Calculated Chart Prep Window</th>
-                <th>Route Verification</th>
                 <th>Official Live Status</th>
                 <th>Allocation State</th>
                 <th>Action</th>
@@ -294,21 +282,14 @@
         document.getElementById("chartDiv").value = '';
     }
 
-    // REDIRECTS NATIVELY TO THE OFFICIAL INDIAN RAILWAYS GATEWAY SYSTEM WITH AUTOMATIC CLIPBOARD ASSIGNMENT
     function checkPnrOfficialGov(pnrNum) {
         navigator.clipboard.writeText(pnrNum).then(() => {
             alert("PNR " + pnrNum + " copied to clipboard!\n\nOpening official Indian Railways Enquiry portal. Simply paste (Ctrl+V) the number into the verification box.");
             window.open("https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html?locale=en", "_blank");
         }).catch(err => {
-            // Fallback strategy if clipboard permissions are blocked by the browser context
             alert("Opening official Indian Railways portal.\nYour target PNR is: " + pnrNum);
             window.open("https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html?locale=en", "_blank");
         });
-    }
-
-    function openErailEnquiry(trainNo) {
-        alert("Opening eRail Train Enquiry.\nSearch Train: " + trainNo + "\nVerify the Originating Division and preceding (RL) Remote Location station data.");
-        window.open("https://erail.in/train-enquiry", "_blank");
     }
 
     function formatDateToIndian(dateStr) {
@@ -352,9 +333,6 @@
                 <td><b>${record.chartStation || 'PENDING'}</b></td>
                 <td><span class="div-badge">${record.chartDiv || 'PENDING'}</span></td>
                 <td style="color:#2e7d32; font-weight:bold;">📋 ${calculatedWindow}</td>
-                <td>
-                    <button class="erail-btn" onclick="openErailEnquiry('${record.trainNo}')">🔍 eRail</button>
-                </td>
                 <td>
                     <button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov Status</button>
                 </td>
