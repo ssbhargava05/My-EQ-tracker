@@ -21,7 +21,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -42,16 +42,16 @@
 
         .form-group {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
             margin-bottom: 20px;
             background: #f9f9f9;
             padding: 15px;
             border-radius: 6px;
             border: 1px solid var(--border);
         }
-        label { font-weight: bold; font-size: 13px; margin-bottom: 5px; display: block; }
-        input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px; }
+        label { font-weight: bold; font-size: 12px; margin-bottom: 5px; display: block; }
+        input, select { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
         
         .btn-panel {
             grid-column: 1 / -1;
@@ -63,46 +63,48 @@
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 13px;
         }
         button:hover { opacity: 0.9; }
         .btn-clear { background-color: #7f8c8d; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; font-size: 13px; }
-        th, td { padding: 10px; border-bottom: 1px solid var(--border); }
-        th { background-color: var(--primary); color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; font-size: 12px; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        th { background-color: var(--primary); color: white; white-space: nowrap; }
         tr:hover { background-color: #f1f1f1; }
         
         .status-select {
             padding: 4px;
             border-radius: 4px;
             font-weight: bold;
+            font-size: 12px;
         }
         .chk-btn {
             background-color: var(--accent);
             color: white;
-            padding: 5px 8px;
-            font-size: 11px;
+            padding: 4px 6px;
             border-radius: 4px;
             border: none;
             cursor: pointer;
             font-weight: bold;
+            font-size: 11px;
         }
         .erail-btn {
             background-color: var(--erail-color);
             color: white;
-            padding: 5px 8px;
-            font-size: 11px;
+            padding: 4px 6px;
             border-radius: 4px;
-            text-decoration: none;
-            display: inline-block;
+            border: none;
+            cursor: pointer;
             font-weight: bold;
-            text-align: center;
+            font-size: 11px;
         }
-        .action-btn { background: #dc3545; color: white; padding: 5px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
+        .action-btn { background: #dc3545; color: white; padding: 4px 6px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; }
+        .div-badge { background: #e0f2f1; color: #004d40; padding: 2px 4px; border-radius: 3px; font-weight: bold; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -112,7 +114,6 @@
     
     <div id="notifBar" class="notification"></div>
     
-    <!-- Input Form -->
     <div class="form-group" id="eqForm">
         <div>
             <label>PNR Number</label>
@@ -127,6 +128,10 @@
             <input type="text" id="trainName" placeholder="e.g., Pallavan Exp">
         </div>
         <div>
+            <label>Origin Division</label>
+            <input type="text" id="originDiv" placeholder="e.g., MAS">
+        </div>
+        <div>
             <label>Boarding Station</label>
             <input type="text" id="bStation" placeholder="e.g., MS">
         </div>
@@ -137,6 +142,14 @@
         <div>
             <label>Passenger Name</label>
             <input type="text" id="passenger" placeholder="Passenger Name">
+        </div>
+        <div>
+            <label>Charting Station</label>
+            <input type="text" id="chartStation" placeholder="e.g., MS">
+        </div>
+        <div>
+            <label>Charting Division</label>
+            <input type="text" id="chartDiv" placeholder="e.g., MAS">
         </div>
         <div>
             <label>Charting Dep. Time</label>
@@ -156,26 +169,27 @@
         </div>
     </div>
 
-    <!-- Data Table -->
     <table id="recordsTable">
         <thead>
             <tr>
                 <th>PNR</th>
                 <th>Train Details</th>
+                <th>Origin Div</th>
                 <th>Boarding</th>
                 <th>Journey Date</th>
                 <th>Passenger</th>
+                <th>Charting Stn</th>
+                <th>Charting Div</th>
                 <th>Charting Dep. Time</th>
                 <th>Calculated Chart Prep Window</th>
-                <th>eRail verification</th>
+                <th>Verification</th>
                 <th>Live Status</th>
                 <th>Allocation State</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- Dynamic Content -->
-        </tbody>
+            </tbody>
     </table>
 </div>
 
@@ -195,9 +209,12 @@
             document.getElementById("pnr").value = params.get('pnr') || '';
             document.getElementById("trainNo").value = params.get('trainNo') || '';
             document.getElementById("trainName").value = params.get('trainName') || '';
+            document.getElementById("originDiv").value = params.get('originDiv') || '';
             document.getElementById("bStation").value = params.get('bStation') || '';
             document.getElementById("jDate").value = params.get('jDate') || '';
             document.getElementById("passenger").value = params.get('passenger') || '';
+            document.getElementById("chartStation").value = params.get('chartStation') || '';
+            document.getElementById("chartDiv").value = params.get('chartDiv') || '';
             document.getElementById("chartDepTime").value = params.get('chartDepTime') || '';
             
             addRequest();
@@ -214,53 +231,48 @@
         setTimeout(() => { bar.style.display = "none"; }, 5000);
     }
 
-    // OPERATIONAL CHART PREPARATION LOGIC ENGINE
     function calculateChartPrepTime(depTimeStr) {
         if (!depTimeStr || depTimeStr === 'Not Set') return 'Awaiting Route Data';
-        
-        // Sanitize string and parse HH:MM
         const timeParts = depTimeStr.trim().split(':');
-        if (timeParts.length < 2) return 'Invalid Time Format';
+        if (timeParts.length < 2) return 'Invalid Format';
         
         const hours = parseInt(timeParts[0], 10);
         const minutes = parseInt(timeParts[1], 10);
-        
-        if (isNaN(hours) || isNaN(minutes)) return 'Invalid Time Data';
+        if (isNaN(hours) || isNaN(minutes)) return 'Invalid Data';
 
-        // Criteria 1: Departure between 05:00 hrs and 14:00 hrs
+        // Rule 1: Departure between 05:00 hrs and 14:00 hrs
         if (hours >= 5 && hours < 14) {
             return 'Prev Day by 21:00 hrs';
         }
         
-        // Criteria 2: Departure between 14:00 hrs and 05:00 hrs (10 Hours Prior calculation)
+        // Rule 2: Departure between 14:00 hrs and 05:00 hrs (10 Hours Prior)
         let targetHours = hours - 10;
         let dayContext = 'Same Day';
-        
         if (targetHours < 0) {
             targetHours = 24 + targetHours;
             dayContext = 'Prev Day';
         }
         
-        const padHours = String(targetHours).padStart(2, '0');
-        const padMinutes = String(minutes).padStart(2, '0');
-        
-        return `${dayContext} at ${padHours}:${padMinutes} hrs`;
+        return `${dayContext} at ${String(targetHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} hrs`;
     }
 
     function addRequest() {
         const pnr = document.getElementById("pnr").value;
         const trainNo = document.getElementById("trainNo").value;
         const trainName = document.getElementById("trainName").value;
+        const originDiv = document.getElementById("originDiv").value.toUpperCase();
         const bStation = document.getElementById("bStation").value.toUpperCase();
         const jDate = document.getElementById("jDate").value;
         const passenger = document.getElementById("passenger").value;
+        const chartStation = document.getElementById("chartStation").value.toUpperCase();
+        const chartDiv = document.getElementById("chartDiv").value.toUpperCase();
         const chartDepTime = document.getElementById("chartDepTime").value || 'Not Set';
         const status = document.getElementById("status").value;
 
         if (!pnr || pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
 
         const records = getRecords();
-        records.unshift({ pnr, trainNo, trainName, bStation, jDate, passenger, chartDepTime, status });
+        records.unshift({ pnr, trainNo, trainName, originDiv, bStation, jDate, passenger, chartStation, chartDiv, chartDepTime, status });
         localStorage.setItem("eqRecords", JSON.stringify(records));
 
         clearForm();
@@ -271,29 +283,31 @@
         document.getElementById("pnr").value = '';
         document.getElementById("trainNo").value = '';
         document.getElementById("trainName").value = '';
+        document.getElementById("originDiv").value = '';
         document.getElementById("bStation").value = '';
         document.getElementById("jDate").value = '';
         document.getElementById("passenger").value = '';
+        document.getElementById("chartStation").value = '';
+        document.getElementById("chartDiv").value = '';
         document.getElementById("chartDepTime").value = '';
     }
 
     function checkPnrLive(pnrNum) {
         navigator.clipboard.writeText(pnrNum).then(() => {
-            alert("PNR " + pnrNum + " copied to clipboard! Opening verification portal...");
+            alert("PNR " + pnrNum + " copied to clipboard!");
             window.open("https://www.confirmtkt.com/pnr-status/" + pnrNum, "_blank");
         });
     }
 
     function openErailEnquiry(trainNo) {
-        alert("Redirecting to eRail Train Enquiry.\n1. Search Train: " + trainNo + "\n2. Verify the (RL) Remote Location station preceding your boarding point to confirm Charting Departure Time.");
+        alert("Opening eRail Train Enquiry.\nSearch Train: " + trainNo + "\nVerify the Originating Division and preceding (RL) Remote Location station data.");
         window.open("https://erail.in/train-enquiry", "_blank");
     }
 
     function formatDateToIndian(dateStr) {
         if(!dateStr) return "N/A";
         const parts = dateStr.split('-');
-        if(parts.length !== 3) return dateStr;
-        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : dateStr;
     }
 
     function updateStatus(index, newStatus) {
@@ -307,6 +321,7 @@
         if(confirm("Permanently delete this entry?")) {
             const records = getRecords();
             records.splice(index, 1);
+            localStorage.setItem("localStorage Keys", JSON.stringify(records));
             localStorage.setItem("eqRecords", JSON.stringify(records));
             displayRecords();
         }
@@ -323,16 +338,19 @@
             const row = `<tr>
                 <td><strong>${record.pnr}</strong></td>
                 <td><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
-                <td><mark><b>${record.bStation || 'N/A'}</b></mark></td>
+                <td><span class="div-badge">${record.originDiv || 'N/A'}</span></td>
+                <td><b>${record.bStation || 'N/A'}</b></td>
                 <td>${formatDateToIndian(record.jDate)}</td>
                 <td>${record.passenger}</td>
+                <td><b>${record.chartStation || 'PENDING'}</b></td>
+                <td><span class="div-badge">${record.chartDiv || 'PENDING'}</span></td>
                 <td>⏱️ <b>${record.chartDepTime}</b></td>
                 <td style="color:#2e7d32; font-weight:bold;">📋 ${calculatedWindow}</td>
                 <td>
-                    <button class="erail-btn" onclick="openErailEnquiry('${record.trainNo}')">🔍 eRail Route</button>
+                    <button class="erail-btn" onclick="openErailEnquiry('${record.trainNo}')">🔍 eRail</button>
                 </td>
                 <td>
-                    <button class="chk-btn" onclick="checkPnrLive('${record.pnr}')">⚡ Verify Status</button>
+                    <button class="chk-btn" onclick="checkPnrLive('${record.pnr}')">⚡ PNR</button>
                 </td>
                 <td>
                     <select class="status-select" onchange="updateStatus(${index}, this.value)">
