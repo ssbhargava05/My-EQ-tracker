@@ -11,7 +11,7 @@
             --text: #333;
             --border: #ccc;
             --accent: #e67e22;
-            --railwise-color: #aa00ff;
+            --erail-color: #d32f2f;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -21,7 +21,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1350px;
+            max-width: 1400px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -42,7 +42,7 @@
 
         .form-group {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
             background: #f9f9f9;
@@ -91,8 +91,8 @@
             cursor: pointer;
             font-weight: bold;
         }
-        .rw-btn {
-            background-color: var(--railwise-color);
+        .erail-btn {
+            background-color: var(--erail-color);
             color: white;
             padding: 5px 8px;
             font-size: 11px;
@@ -101,8 +101,6 @@
             display: inline-block;
             font-weight: bold;
             text-align: center;
-            border: none;
-            cursor: pointer;
         }
         .action-btn { background: #dc3545; color: white; padding: 5px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
     </style>
@@ -129,7 +127,7 @@
             <input type="text" id="trainName" placeholder="e.g., Pallavan Exp">
         </div>
         <div>
-            <label>Boarding Station Code</label>
+            <label>Boarding Station</label>
             <input type="text" id="bStation" placeholder="e.g., MS">
         </div>
         <div>
@@ -138,7 +136,11 @@
         </div>
         <div>
             <label>Passenger Name</label>
-            <input type="text" id="passenger" placeholder="Name">
+            <input type="text" id="passenger" placeholder="Passenger Name">
+        </div>
+        <div>
+            <label>Charting Dep. Time</label>
+            <input type="text" id="chartDepTime" placeholder="e.g., 15:40">
         </div>
         <div>
             <label>EQ Status</label>
@@ -163,7 +165,9 @@
                 <th>Boarding</th>
                 <th>Journey Date</th>
                 <th>Passenger</th>
-                <th>Automated Charting Rules</th>
+                <th>Charting Dep. Time</th>
+                <th>Calculated Chart Prep Window</th>
+                <th>eRail verification</th>
                 <th>Live Status</th>
                 <th>Allocation State</th>
                 <th>Action</th>
@@ -194,6 +198,7 @@
             document.getElementById("bStation").value = params.get('bStation') || '';
             document.getElementById("jDate").value = params.get('jDate') || '';
             document.getElementById("passenger").value = params.get('passenger') || '';
+            document.getElementById("chartDepTime").value = params.get('chartDepTime') || '';
             
             addRequest();
             
@@ -209,6 +214,39 @@
         setTimeout(() => { bar.style.display = "none"; }, 5000);
     }
 
+    // OPERATIONAL CHART PREPARATION LOGIC ENGINE
+    function calculateChartPrepTime(depTimeStr) {
+        if (!depTimeStr || depTimeStr === 'Not Set') return 'Awaiting Route Data';
+        
+        // Sanitize string and parse HH:MM
+        const timeParts = depTimeStr.trim().split(':');
+        if (timeParts.length < 2) return 'Invalid Time Format';
+        
+        const hours = parseInt(timeParts[0], 10);
+        const minutes = parseInt(timeParts[1], 10);
+        
+        if (isNaN(hours) || isNaN(minutes)) return 'Invalid Time Data';
+
+        // Criteria 1: Departure between 05:00 hrs and 14:00 hrs
+        if (hours >= 5 && hours < 14) {
+            return 'Prev Day by 21:00 hrs';
+        }
+        
+        // Criteria 2: Departure between 14:00 hrs and 05:00 hrs (10 Hours Prior calculation)
+        let targetHours = hours - 10;
+        let dayContext = 'Same Day';
+        
+        if (targetHours < 0) {
+            targetHours = 24 + targetHours;
+            dayContext = 'Prev Day';
+        }
+        
+        const padHours = String(targetHours).padStart(2, '0');
+        const padMinutes = String(minutes).padStart(2, '0');
+        
+        return `${dayContext} at ${padHours}:${padMinutes} hrs`;
+    }
+
     function addRequest() {
         const pnr = document.getElementById("pnr").value;
         const trainNo = document.getElementById("trainNo").value;
@@ -216,12 +254,13 @@
         const bStation = document.getElementById("bStation").value.toUpperCase();
         const jDate = document.getElementById("jDate").value;
         const passenger = document.getElementById("passenger").value;
+        const chartDepTime = document.getElementById("chartDepTime").value || 'Not Set';
         const status = document.getElementById("status").value;
 
         if (!pnr || pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
 
         const records = getRecords();
-        records.unshift({ pnr, trainNo, trainName, bStation, jDate, passenger, status });
+        records.unshift({ pnr, trainNo, trainName, bStation, jDate, passenger, chartDepTime, status });
         localStorage.setItem("eqRecords", JSON.stringify(records));
 
         clearForm();
@@ -235,6 +274,7 @@
         document.getElementById("bStation").value = '';
         document.getElementById("jDate").value = '';
         document.getElementById("passenger").value = '';
+        document.getElementById("chartDepTime").value = '';
     }
 
     function checkPnrLive(pnrNum) {
@@ -244,9 +284,9 @@
         });
     }
 
-    function openRailwiseCharts(trainNo) {
-        if (!trainNo) { alert("Train Number missing for this log entry."); return; }
-        window.open("https://railwise.in/chart-preparation-time/" + trainNo, "_blank");
+    function openErailEnquiry(trainNo) {
+        alert("Redirecting to eRail Train Enquiry.\n1. Search Train: " + trainNo + "\n2. Verify the (RL) Remote Location station preceding your boarding point to confirm Charting Departure Time.");
+        window.open("https://erail.in/train-enquiry", "_blank");
     }
 
     function formatDateToIndian(dateStr) {
@@ -278,14 +318,18 @@
         tbody.innerHTML = "";
 
         records.forEach((record, index) => {
+            const calculatedWindow = calculateChartPrepTime(record.chartDepTime);
+            
             const row = `<tr>
                 <td><strong>${record.pnr}</strong></td>
                 <td><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
                 <td><mark><b>${record.bStation || 'N/A'}</b></mark></td>
                 <td>${formatDateToIndian(record.jDate)}</td>
                 <td>${record.passenger}</td>
+                <td>⏱️ <b>${record.chartDepTime}</b></td>
+                <td style="color:#2e7d32; font-weight:bold;">📋 ${calculatedWindow}</td>
                 <td>
-                    <button class="rw-btn" onclick="openRailwiseCharts('${record.trainNo}')">⏱️ Railwise Chart Profile</button>
+                    <button class="erail-btn" onclick="openErailEnquiry('${record.trainNo}')">🔍 eRail Route</button>
                 </td>
                 <td>
                     <button class="chk-btn" onclick="checkPnrLive('${record.pnr}')">⚡ Verify Status</button>
