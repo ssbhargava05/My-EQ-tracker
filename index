@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EQ Request Dashboard</title>
+    <style>
+        :root {
+            --primary: #003366;
+            --secondary: #f4f6f9;
+            --text: #333;
+            --border: #ccc;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--secondary);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 8px; }
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        label { font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px; }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            grid-column: 1 / -1;
+            justify-self: end;
+        }
+        button:hover { opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); }
+        th { background-color: var(--primary); color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending { background: #ffeeba; color: #856404; }
+        .status-confirmed { background: #c3e6cb; color: #155724; }
+        .status-regret { background: #f5c6cb; color: #721c24; }
+        .action-btn { background: #dc3545; color: white; padding: 4px 8px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>EQ Request Master Compilation</h2>
+    
+    <!-- Input Form -->
+    <div class="form-group" id="eqForm">
+        <div>
+            <label>PNR Number</label>
+            <input type="text" id="pnr" placeholder="e.g., 6832357861">
+        </div>
+        <div>
+            <label>Train Details</label>
+            <input type="text" id="train" placeholder="e.g., 12792 / SECUNDERABAD EX">
+        </div>
+        <div>
+            <label>Journey Date</label>
+            <input type="date" id="jDate">
+        </div>
+        <div>
+            <label>Passenger Name</label>
+            <input type="text" id="passenger" placeholder="Name">
+        </div>
+        <div>
+            <label>EQ Status</label>
+            <select id="status">
+                <option value="Pending">⌛ Pending</option>
+                <option value="Confirmed">✅ Confirmed</option>
+                <option value="Regret">❌ Regret / WL</option>
+            </select>
+        </div>
+        <button onclick="addRequest()">Log Request</button>
+    </div>
+
+    <!-- Data Table -->
+    <table id="recordsTable">
+        <thead>
+            <tr>
+                <th>PNR</th>
+                <th>Train Details</th>
+                <th>Journey Date</th>
+                <th>Passenger</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- Dynamic Rows Go Here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Load existing records from local storage on startup
+    document.addEventListener("DOMContentLoaded", displayRecords);
+
+    function getRecords() {
+        return JSON.parse(localStorage.getItem("eqRecords")) || [];
+    }
+
+    function addRequest() {
+        const pnr = document.getElementById("pnr").value;
+        const train = document.getElementById("train").value;
+        const jDate = document.getElementById("jDate").value;
+        const passenger = document.getElementById("passenger").value;
+        const status = document.getElementById("status").value;
+
+        if (!pnr) { alert("PNR is required"); return; }
+
+        const records = getRecords();
+        records.push({ pnr, train, jDate, passenger, status });
+        localStorage.setItem("eqRecords", JSON.stringify(records));
+
+        // Clear input fields
+        document.getElementById("pnr").value = '';
+        document.getElementById("train").value = '';
+        document.getElementById("jDate").value = '';
+        document.getElementById("passenger").value = '';
+
+        displayRecords();
+    }
+
+    function updateStatus(index, newStatus) {
+        const records = getRecords();
+        records[index].status = newStatus;
+        localStorage.setItem("eqRecords", JSON.stringify(records));
+        displayRecords();
+    }
+
+    function deleteRecord(index) {
+        if(confirm("Are you sure you want to delete this log?")) {
+            const records = getRecords();
+            records.splice(index, 1);
+            localStorage.setItem("eqRecords", JSON.stringify(records));
+            displayRecords();
+        }
+    }
+
+    function displayRecords() {
+        const records = getRecords();
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+
+        records.forEach((record, index) => {
+            let badgeClass = "status-pending";
+            if (record.status === "Confirmed") badgeClass = "status-confirmed";
+            if (record.status === "Regret") badgeClass = "status-regret";
+
+            const row = `<tr>
+                <td><strong>${record.pnr}</strong></td>
+                <td>${record.train}</td>
+                <td>${record.jDate}</td>
+                <td>${record.passenger}</td>
+                <td>
+                    <select onchange="updateStatus(${index}, this.value)">
+                        <option value="Pending" ${record.status === 'Pending' ? 'selected' : ''}>⌛ Pending</option>
+                        <option value="Confirmed" ${record.status === 'Confirmed' ? 'selected' : ''}>✅ Confirmed</option>
+                        <option value="Regret" ${record.status === 'Regret' ? 'selected' : ''}>❌ Regret</option>
+                    </select>
+                </td>
+                <td>
+                    <button class="action-btn" onclick="deleteRecord(${index})">Delete</button>
+                </td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+</script>
+</body>
+</html>
