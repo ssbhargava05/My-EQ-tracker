@@ -21,7 +21,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1500px;
+            max-width: 1550px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -166,6 +166,7 @@
     <table id="recordsTable">
         <thead>
             <tr>
+                <th>S.No</th>
                 <th>PNR</th>
                 <th>Train Details</th>
                 <th>Origin Div</th>
@@ -226,7 +227,6 @@
         setTimeout(() => { bar.style.display = "none"; }, 5000);
     }
 
-    // CORRECTED OPERATIONAL CHART PREPARATION CALCULATOR ENGINE (BASED ON CHARTING STATION DEPARTURE)
     function calculateChartPrepTime(chartDepTimeStr) {
         if (!chartDepTimeStr || chartDepTimeStr === 'Not Set' || chartDepTimeStr === 'PENDING') return 'Awaiting Chart Dep Time';
         
@@ -237,12 +237,10 @@
         const minutes = parseInt(timeParts[1], 10);
         if (isNaN(hours) || isNaN(minutes)) return 'Invalid Data';
 
-        // RULE 1: Charting station departure is between 05:00 hrs and 14:00 hrs
         if (hours >= 5 && hours < 14) {
             return 'Prev Day by 21:00 hrs';
         }
         
-        // RULE 2: Charting station departure is between 14:00 hrs to 05:00 hrs (10 Hours Before Departure)
         let targetHours = hours - 10;
         let dayContext = 'Same Day';
         
@@ -330,10 +328,10 @@
         tbody.innerHTML = "";
 
         records.forEach((record, index) => {
-            // Evaluates using record.chartDepTime strictly
             const calculatedWindow = calculateChartPrepTime(record.chartDepTime);
             
             const row = `<tr>
+                <td style="text-align: center; font-weight: bold; color: #555;">${index + 1}</td>
                 <td><strong>${record.pnr}</strong></td>
                 <td><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
                 <td><span class="div-badge">${record.originDiv || 'N/A'}</span></td>
