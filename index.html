@@ -199,7 +199,10 @@
             document.getElementById("passenger").value = params.get('passenger') || '';
             document.getElementById("chartTime").value = params.get('chart') || '';
             
-            showNotification("Data loaded dynamically from request! Review details and click 'Log & Save Request'.");
+            // AUTOMATIC ONE-CLICK LOGGING ACTION
+            addRequest();
+            
+            showNotification("Successfully logged dynamic entry from chat!");
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
@@ -229,7 +232,6 @@
 
         clearForm();
         displayRecords();
-        showNotification("Record stored successfully.");
     }
 
     function clearForm() {
