@@ -6,99 +6,129 @@
     <title>EQ Request Dashboard</title>
     <style>
         :root {
-            --primary: #003366;
-            --secondary: #f4f6f9;
-            --text: #333;
-            --border: #ccc;
+            --primary: #002244;
+            --secondary: #f8f9fa;
+            --text: #222;
+            --border: #dcdcdc;
             --accent: #e67e22;
             --gov-color: #0d47a1;
             --cloud-color: #ff9100;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--secondary);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 8px; /* Extremely tight margins to reclaim screen space */
         }
         .container {
-            max-width: 1550px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 100%; /* Spans full edge-to-edge width of monitor */
+            box-sizing: border-box;
             background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 12px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 8px; }
+        h2 { 
+            font-size: 16px; 
+            color: var(--primary); 
+            margin: 0 0 10px 0; 
+            border-bottom: 2px solid var(--primary); 
+            padding-bottom: 4px; 
+        }
         
         .notification {
             background-color: #d4edda;
             color: #155724;
-            padding: 10px;
-            margin-bottom: 15px;
+            padding: 6px;
+            margin-bottom: 10px;
             border-radius: 4px;
             display: none;
             font-weight: bold;
+            font-size: 11px;
         }
 
         .form-group {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 6px;
+            grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); /* Maximized input packing density */
+            gap: 6px;
+            margin-bottom: 12px;
+            background: #f1f3f5;
+            padding: 8px 12px;
+            border-radius: 4px;
             border: 1px solid var(--border);
         }
-        label { font-weight: bold; font-size: 12px; margin-bottom: 5px; display: block; }
-        input, select { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+        label { font-weight: bold; font-size: 10px; margin-bottom: 3px; display: block; color: #444; }
+        input, select { width: 100%; padding: 4px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 3px; font-size: 11px; height: 26px; }
         
         .btn-panel {
             grid-column: 1 / -1;
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
+            gap: 8px;
+            margin-top: 4px;
         }
         button {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 4px 12px;
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 3px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 11px;
+            height: 26px;
         }
         button:hover { opacity: 0.9; }
-        .btn-clear { background-color: #7f8c8d; }
+        .btn-clear { background-color: #6c757d; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; font-size: 12px; }
-        th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-        th { background-color: var(--primary); color: white; white-space: nowrap; }
-        tr:hover { background-color: #f1f1f1; }
+        /* Ultra-Condensed Compact Table Styles */
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; margin-top: 5px; }
+        th, td { padding: 4px 5px; border: 1px solid var(--border); vertical-align: middle; line-height: 1.2; }
+        th { background-color: var(--primary); color: white; white-space: nowrap; font-size: 11px; font-weight: 600; }
+        tr:hover { background-color: #f8f9fa; }
         
+        /* Layout Constraints to Prevent Column Ballooning */
+        .nowrap-cell { white-space: nowrap; }
+        .passenger-cell { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+        .chart-window-cell { min-width: 140px; color: #1b5e20; font-weight: bold; font-size: 10.5px; }
+
         .status-select {
-            padding: 4px;
-            border-radius: 4px;
+            padding: 2px;
+            border-radius: 3px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 10.5px;
+            height: 22px;
+            width: 105px;
         }
         .chk-btn {
             background-color: var(--gov-color);
             color: white;
-            padding: 4px 6px;
-            border-radius: 4px;
+            padding: 2px 5px;
+            border-radius: 3px;
             border: none;
             cursor: pointer;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
+            height: 22px;
+            white-space: nowrap;
         }
-        .action-btn { background: #dc3545; color: white; padding: 4px 6px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; }
-        .div-badge { background: #e0f2f1; color: #004d40; padding: 2px 4px; border-radius: 3px; font-weight: bold; font-size: 11px; }
-        .sync-indicator { font-size: 11px; color: var(--cloud-color); font-weight: bold; float: right; margin-top: 5px;}
+        .action-btn { 
+            background: #c82333; 
+            color: white; 
+            padding: 2px 5px; 
+            border-radius: 3px; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 10px; 
+            height: 22px;
+        }
+        .div-badge { background: #e0f2f1; color: #004d40; padding: 1px 3px; border-radius: 2px; font-weight: bold; font-size: 10px; }
+        .sync-indicator { font-size: 11px; color: var(--cloud-color); font-weight: bold; float: right; }
     </style>
 
+    <!-- FIREBASE COMPAT CORE MODULES -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
@@ -110,6 +140,7 @@
     
     <div id="notifBar" class="notification"></div>
     
+    <!-- Ultra-Low Height Input Form Layout -->
     <div class="form-group" id="eqForm">
         <div>
             <label>PNR Number</label>
@@ -169,33 +200,35 @@
         </div>
     </div>
 
+    <!-- Edge-to-Edge Data Grid Matrix -->
     <table id="recordsTable">
         <thead>
             <tr>
-                <th>S.No</th>
+                <th style="width: 25px; text-align: center;">S.No</th>
                 <th>PNR</th>
                 <th>Train Details</th>
-                <th>Origin Div</th>
-                <th>Boarding</th>
+                <th>Orig Div</th>
+                <th>Brdg Stn</th>
                 <th>Journey Date</th>
-                <th>Boarding Dep</th>
-                <th>Passenger</th>
-                <th>Charting Stn</th>
-                <th>Charting Div</th>
-                <th>Charting Dep</th>
-                <th>Calculated Chart Prep Time</th>
-                <th>Official Live Status</th>
+                <th>Brdg Dep</th>
+                <th>Passenger Profile</th>
+                <th>Chrt Stn</th>
+                <th>Chrt Div</th>
+                <th>Chrt Dep</th>
+                <th>Calculated Chart Prep Window</th>
+                <th>Official Verification</th>
                 <th>Allocation State</th>
-                <th>Action</th>
+                <th style="width: 40px; text-align: center;">Action</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            </tbody>
+            <!-- Dynamic Realtime Rows Loaded and Chronologically Ordered Automatically -->
+        </tbody>
     </table>
 </div>
 
 <script>
-    // YOUR VERIFIED APP KEYS
+    // ACTIVE SYSTEM KEYS CONFIGURATION MAP
     const firebaseConfig = {
         apiKey: "AIzaSyCkNA0lawZPrHMg59whHSgIji3ulXq_Wmg",
         authDomain: "eq-tracker-83c3c.firebaseapp.com",
@@ -207,7 +240,6 @@
         measurementId: "G-XV1MH0Z1HC"
     };
 
-    // Initialize Connection Instance
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
@@ -232,47 +264,62 @@
                 chartStation: params.get('chartStation') || '',
                 chartDiv: params.get('chartDiv') || '',
                 chartDepTime: params.get('chartDepTime') || '',
-                status: 'Pending',
-                negTimestamp: -Date.now() // For descending sequence ordering
+                status: 'Pending'
             };
             
             if (pnr.length === 10) {
                 database.ref('eq_requests/' + pnr).set(record)
                 .then(() => {
-                    showNotification("Successfully synced dynamic entry to Realtime Database stream!");
-                }).catch(err => console.error("Database write failure:", err));
+                    showNotification("Successfully synced dynamic entry to Cloud stream!");
+                }).catch(err => console.error("Database storage drop error:", err));
             }
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
 
-    // LISTENS TO REALTIME ROUTINES NATIVELY ACROSS ALL TIERS
     function listenToRealtimeSync() {
-        database.ref('eq_requests').orderByChild('negTimestamp')
-        .on('value', (snapshot) => {
+        database.ref('eq_requests').on('value', (snapshot) => {
             const tbody = document.getElementById("tableBody");
             tbody.innerHTML = "";
-            let idx = 1;
             
+            let recordsList = [];
             snapshot.forEach((childSnapshot) => {
-                const record = childSnapshot.val();
+                recordsList.push(childSnapshot.val());
+            });
+
+            // CHRONOLOGICAL CHANNELD SORTING LOOP: 
+            // Evaluates Journey Date first, then falls back to Departure Time string indexes.
+            // Arranges the latest timeline entries at index 1 (Top), pushing older timestamps down.
+            recordsList.sort((a, b) => {
+                const dateA = a.jDate || "0000-00-00";
+                const dateB = b.jDate || "0000-00-00";
+                if (dateB !== dateA) {
+                    return dateB.localeCompare(dateA); 
+                }
+                const timeA = a.depTime || "00:00";
+                const timeB = b.depTime || "00:00";
+                return timeB.localeCompare(timeA);
+            });
+
+            let idx = 1;
+            recordsList.forEach((record) => {
                 const calculatedWindow = calculateChartPrepTime(record.chartDepTime);
                 
                 const row = `<tr>
-                    <td style="text-align: center; font-weight: bold; color: #555;">${idx++}</td>
-                    <td><strong>${record.pnr}</strong></td>
-                    <td><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
+                    <td style="text-align: center; font-weight: bold; color: #666;">${idx++}</td>
+                    <td class="nowrap-cell"><strong>${record.pnr}</strong></td>
+                    <td class="nowrap-cell"><strong>${record.trainNo}</strong> - ${record.trainName || ''}</td>
                     <td><span class="div-badge">${record.originDiv || 'N/A'}</span></td>
-                    <td><b>${record.bStation || 'N/A'}</b></td>
-                    <td>${formatDateToIndian(record.jDate)}</td>
-                    <td>⏱️ <b>${record.depTime || 'N/A'}</b></td>
-                    <td>${record.passenger}</td>
-                    <td><b>${record.chartStation || 'PENDING'}</b></td>
+                    <td class="nowrap-cell"><b>${record.bStation || 'N/A'}</b></td>
+                    <td class="nowrap-cell">${formatDateToIndian(record.jDate)}</td>
+                    <td class="nowrap-cell">⏱️ <b>${record.depTime || 'N/A'}</b></td>
+                    <td class="passenger-cell" title="${record.passenger}">${record.passenger}</td>
+                    <td class="nowrap-cell"><b>${record.chartStation || 'PENDING'}</b></td>
                     <td><span class="div-badge">${record.chartDiv || 'PENDING'}</span></td>
-                    <td>⏱️ <b>${record.chartDepTime || 'PENDING'}</b></td>
-                    <td style="color:#2e7d32; font-weight:bold;">📋 ${calculatedWindow}</td>
-                    <td>
-                        <button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov Status</button>
+                    <td class="nowrap-cell">⏱️ <b>${record.chartDepTime || 'PENDING'}</b></td>
+                    <td class="chart-window-cell">📋 ${calculatedWindow}</td>
+                    <td style="text-align: center;">
+                        <button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov</button>
                     </td>
                     <td>
                         <select class="status-select" onchange="updateRealtimeStatus('${record.pnr}', this.value)">
@@ -281,14 +328,14 @@
                             <option value="Regret" ${record.status === 'Regret' ? 'selected' : ''}>❌ Regret</option>
                         </select>
                     </td>
-                    <td>
+                    <td style="text-align: center;">
                         <button class="action-btn" onclick="deleteRealtimeRecord('${record.pnr}')">Delete</button>
                     </td>
                 </tr>`;
                 tbody.innerHTML += row;
             });
         }, (error) => {
-            console.error("Realtime listener loop broken: ", error);
+            console.error("Realtime listener synchronization broken: ", error);
         });
     }
 
@@ -308,13 +355,12 @@
             chartStation: document.getElementById("chartStation").value.toUpperCase(),
             chartDiv: document.getElementById("chartDiv").value.toUpperCase(),
             chartDepTime: document.getElementById("chartDepTime").value,
-            status: document.getElementById("status").value,
-            negTimestamp: -Date.now()
+            status: document.getElementById("status").value
         };
 
         database.ref('eq_requests/' + pnr).set(record).then(() => {
             clearForm();
-            showNotification("Manual entry locked into Realtime Cloud matrix.");
+            showNotification("Manual entry locked into synchronized ledger.");
         });
     }
 
@@ -323,22 +369,22 @@
     }
 
     function deleteRealtimeRecord(pnr) {
-        if (confirm("Permanently delete this entry across all synchronized layouts?")) {
+        if (confirm("Permanently delete this entry across all synchronized devices?")) {
             database.ref('eq_requests/' + pnr).remove();
         }
     }
 
     function calculateChartPrepTime(chartDepTimeStr) {
-        if (!chartDepTimeStr || chartDepTimeStr === 'Not Set' || chartDepTimeStr === 'PENDING') return 'Awaiting Chart Dep Time';
+        if (!chartDepTimeStr || chartDepTimeStr === 'Not Set' || chartDepTimeStr === 'PENDING') return 'Awaiting Dep Time';
         const timeParts = chartDepTimeStr.trim().split(':');
         if (timeParts.length < 2) return 'Invalid Format';
         const hours = parseInt(timeParts[0], 10);
         const minutes = parseInt(timeParts[1], 10);
-        if (hours >= 5 && hours < 14) return 'Prev Day by 21:00 hrs';
+        if (hours >= 5 && hours < 14) return 'Prev Day by 21:00';
         let targetHours = hours - 10;
         let dayContext = 'Same Day';
         if (targetHours < 0) { targetHours = 24 + targetHours; dayContext = 'Prev Day'; }
-        return `${dayContext} at ${String(targetHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} hrs`;
+        return `${dayContext} ${String(targetHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} hrs`;
     }
 
     function clearForm() {
@@ -352,7 +398,7 @@
 
     function checkPnrOfficialGov(pnrNum) {
         navigator.clipboard.writeText(pnrNum).then(() => {
-            alert("PNR " + pnrNum + " copied to clipboard!\n\nOpening official Indian Railways Enquiry portal. Paste (Ctrl+V) into the verification box.");
+            alert("PNR " + pnrNum + " copied to clipboard!\n\nOpening official Indian Railways Enquiry portal.");
             window.open("https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html?locale=en", "_blank");
         });
     }
@@ -360,7 +406,7 @@
     function formatDateToIndian(dateStr) {
         if(!dateStr) return "N/A";
         const parts = dateStr.split('-');
-        return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : dateStr;
+        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
     }
 
     function showNotification(msg) {
