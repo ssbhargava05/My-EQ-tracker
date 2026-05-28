@@ -19,11 +19,11 @@
             background-color: var(--secondary);
             color: var(--text);
             margin: 0;
-            padding: 8px;
+            padding: 8px; /* Compact margin to maximize screen estate */
         }
         .container {
             width: 100%;
-            max-width: 100%;
+            max-width: 100%; /* Expands full edge-to-edge width of monitor */
             box-sizing: border-box;
             background: #fff;
             padding: 12px;
@@ -47,33 +47,6 @@
             display: none;
             font-weight: bold;
             font-size: 11px;
-        }
-
-        /* Bulk Paste Styling */
-        .paste-box-container {
-            margin-bottom: 12px;
-            background: #fff3cd;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #ffeeba;
-        }
-        .paste-box-container label {
-            font-weight: bold;
-            font-size: 11px;
-            color: #856404;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .paste-textarea {
-            width: 100%;
-            height: 60px;
-            box-sizing: border-box;
-            border: 1px solid #ffeeba;
-            border-radius: 3px;
-            font-family: monospace;
-            font-size: 11px;
-            padding: 5px;
-            resize: vertical;
         }
 
         .form-group {
@@ -109,8 +82,8 @@
         }
         button:hover { opacity: 0.9; }
         .btn-clear { background-color: #6c757d; }
-        .btn-parse { background-color: #218838; }
         
+        /* Ultra-Condensed Table Styles for Single Screen Visibility */
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; margin-top: 5px; }
         th, td { padding: 4px 5px; border: 1px solid var(--border); vertical-align: middle; line-height: 1.2; }
         th { background-color: var(--primary); color: white; white-space: nowrap; font-size: 11px; font-weight: 600; }
@@ -154,6 +127,7 @@
         .sync-indicator { font-size: 11px; color: var(--cloud-color); font-weight: bold; float: right; }
     </style>
 
+    <!-- FIREBASE PLATFORM MODULE CLIENTS -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
@@ -165,28 +139,52 @@
     
     <div id="notifBar" class="notification"></div>
     
-    <!-- Bulk Text Extraction Box -->
-    <div class="paste-box-container">
-        <label>📋 Smart Text Copier Terminal (Paste raw message logs or text here to auto-extract & sync)</label>
-        <textarea id="bulkPasteInput" class="paste-textarea" placeholder="Paste text containing PNR, Train No, Date, Passenger Name etc..."></textarea>
-        <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
-            <button class="btn-parse" onclick="processBulkText()">Auto Extract & Cloud Sync</button>
-        </div>
-    </div>
-
-    <!-- Manual input fields -->
+    <!-- Input Form -->
     <div class="form-group" id="eqForm">
-        <div><label>PNR Number</label><input type="text" id="pnr" maxlength="10"></div>
-        <div><label>Train Number</label><input type="text" id="trainNo"></div>
-        <div><label>Train Name</label><input type="text" id="trainName"></div>
-        <div><label>Origin Division</label><input type="text" id="originDiv"></div>
-        <div><label>Boarding Station</label><input type="text" id="bStation"></div>
-        <div><label>Journey Date</label><input type="date" id="jDate"></div>
-        <div><label>Boarding Dep. Time</label><input type="text" id="depTime"></div>
-        <div><label>Passenger Name</label><input type="text" id="passenger"></div>
-        <div><label>Charting Station</label><input type="text" id="chartStation"></div>
-        <div><label>Charting Division</label><input type="text" id="chartDiv"></div>
-        <div><label>Charting Dep. Time</label><input type="text" id="chartDepTime"></div>
+        <div>
+            <label>PNR Number</label>
+            <input type="text" id="pnr" maxlength="10" placeholder="10 digit PNR">
+        </div>
+        <div>
+            <label>Train Number</label>
+            <input type="text" id="trainNo" placeholder="e.g., 12605">
+        </div>
+        <div>
+            <label>Train Name</label>
+            <input type="text" id="trainName" placeholder="e.g., Pallavan Exp">
+        </div>
+        <div>
+            <label>Origin Division</label>
+            <input type="text" id="originDiv" placeholder="e.g., MAS">
+        </div>
+        <div>
+            <label>Boarding Station</label>
+            <input type="text" id="bStation" placeholder="e.g., MS">
+        </div>
+        <div>
+            <label>Journey Date</label>
+            <input type="date" id="jDate">
+        </div>
+        <div>
+            <label>Boarding Dep. Time</label>
+            <input type="text" id="depTime" placeholder="e.g., 15:40">
+        </div>
+        <div>
+            <label>Passenger Name</label>
+            <input type="text" id="passenger" placeholder="Passenger Name">
+        </div>
+        <div>
+            <label>Charting Station</label>
+            <input type="text" id="chartStation" placeholder="e.g., MS">
+        </div>
+        <div>
+            <label>Charting Division</label>
+            <input type="text" id="chartDiv" placeholder="e.g., MAS">
+        </div>
+        <div>
+            <label>Charting Dep. Time</label>
+            <input type="text" id="chartDepTime" placeholder="e.g., 15:40">
+        </div>
         <div>
             <label>EQ Status</label>
             <select id="status">
@@ -197,10 +195,11 @@
         </div>
         <div class="btn-panel">
             <button class="btn-clear" onclick="clearForm()">Clear Fields</button>
-            <button onclick="handleManualSubmit()">Log Request</button>
+            <button onclick="handleManualSubmit()">Log & Save Request</button>
         </div>
     </div>
 
+    <!-- Wide Data Table Grid -->
     <table id="recordsTable">
         <thead>
             <tr>
@@ -221,7 +220,9 @@
                 <th style="width: 40px; text-align: center;">Action</th>
             </tr>
         </thead>
-        <tbody id="tableBody"></tbody>
+        <tbody id="tableBody">
+            <!-- Cloud Rows Auto Sorted Chronologically -->
+        </tbody>
     </table>
 </div>
 
@@ -241,67 +242,75 @@
     const database = firebase.database();
 
     document.addEventListener("DOMContentLoaded", () => {
+        parseUrlParameters();
         listenToRealtimeSync();
     });
 
-    // SMART PARSER ENGINE FOR RAW MESSAGES
-    function processBulkText() {
-        const text = document.getElementById("bulkPasteInput").value;
-        if (!text.trim()) { alert("Please paste text first."); return; }
+    // ORIGINAL PARAMETER PARSER REVERTED BACK
+    function parseUrlParameters() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('pnr')) {
+            const pnr = params.get('pnr') || '';
+            
+            // Replaces underscores back into spaces for pristine display rendering
+            const rawPassenger = params.get('passenger') || '';
+            const cleanPassenger = rawPassenger.replace(/_/g, ' ');
+            
+            const rawTrainName = params.get('trainName') || '';
+            const cleanTrainName = rawTrainName.replace(/_/g, ' ');
 
-        // Clean hyphen/spaces out of PNR extraction
-        const pnrMatch = text.replace(/[-\s]/g, "").match(/\b\d{10}\b/);
-        const trainNoMatch = text.match(/(?:Train\s*(?:No|no)?[:.-]?\s*)(\d{5})/i) || text.match(/\b\d{5}\b/);
-        const dateMatch = text.match(/(\d{2})[-./](\d{2})[-./](\d{4})/);
-        const passengerMatch = text.match(/(?:Passenger\s*(?:name|Details)?[:.-]?\s*)([A-Za-z\s]+)(?:\n|\r|$)/i) || text.match(/(?:1\.\s*)([A-Za-z\s]+)/);
-
-        if (!pnrMatch) {
-            alert("Could not detect a clean 10-digit PNR string in the text.");
-            return;
+            const record = {
+                pnr: pnr,
+                trainNo: params.get('trainNo') || '',
+                trainName: cleanTrainName,
+                originDiv: params.get('originDiv') || '',
+                bStation: params.get('bStation') || '',
+                jDate: params.get('jDate') || '',
+                depTime: params.get('depTime') || '',
+                passenger: cleanPassenger,
+                chartStation: params.get('chartStation') || '',
+                chartDiv: params.get('chartDiv') || '',
+                chartDepTime: params.get('chartDepTime') || '',
+                status: 'Pending'
+            };
+            
+            if (pnr.length === 10) {
+                database.ref('eq_requests/' + pnr).set(record)
+                .then(() => {
+                    showNotification("Successfully synced dynamic entry via safe URL parameter routing!");
+                }).catch(err => console.error("Realtime sync failed:", err));
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-
-        let formattedDate = "";
-        if (dateMatch) {
-            formattedDate = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; // standard format YYYY-MM-DD
-        }
-
-        const record = {
-            pnr: pnrMatch[0],
-            trainNo: trainNoMatch ? trainNoMatch[1] || trainNoMatch[0] : "Pending",
-            trainName: "Extracted Entry", 
-            originDiv: "MAS",
-            bStation: "Pending",
-            jDate: formattedDate || new Date().toISOString().split('T')[0],
-            depTime: "Pending",
-            passenger: passengerMatch ? passengerMatch[1].trim() : "Unknown Passenger",
-            chartStation: "Pending",
-            chartDiv: "MAS",
-            chartDepTime: "Pending",
-            status: "Pending"
-        };
-
-        database.ref('eq_requests/' + record.pnr).set(record).then(() => {
-            document.getElementById("bulkPasteInput").value = "";
-            showNotification(`PNR ${record.pnr} extracted and synced to cloud!`);
-        });
     }
 
     function listenToRealtimeSync() {
         database.ref('eq_requests').on('value', (snapshot) => {
             const tbody = document.getElementById("tableBody");
             tbody.innerHTML = "";
+            
             let recordsList = [];
-            snapshot.forEach((childSnapshot) => { recordsList.push(childSnapshot.val()); });
+            snapshot.forEach((childSnapshot) => {
+                recordsList.push(childSnapshot.val());
+            });
 
+            // CHRONOLOGICAL AUTOMATIC SORTING LOOP:
+            // Elevates the newest Journey Date to the top, then sorts by Departure Time.
             recordsList.sort((a, b) => {
-                const dateA = a.jDate || "0000-00-00"; const dateB = b.jDate || "0000-00-00";
-                if (dateB !== dateA) return dateB.localeCompare(dateA); 
-                return (b.depTime || "00:00").localeCompare(a.depTime || "00:00");
+                const dateA = a.jDate || "0000-00-00";
+                const dateB = b.jDate || "0000-00-00";
+                if (dateB !== dateA) {
+                    return dateB.localeCompare(dateA); 
+                }
+                const timeA = a.depTime || "00:00";
+                const timeB = b.depTime || "00:00";
+                return timeB.localeCompare(timeA);
             });
 
             let idx = 1;
             recordsList.forEach((record) => {
                 const calculatedWindow = calculateChartPrepTime(record.chartDepTime);
+                
                 const row = `<tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">${idx++}</td>
                     <td class="nowrap-cell"><strong>${record.pnr}</strong></td>
@@ -315,7 +324,9 @@
                     <td><span class="div-badge">${record.chartDiv || 'PENDING'}</span></td>
                     <td class="nowrap-cell">⏱️ <b>${record.chartDepTime || 'PENDING'}</b></td>
                     <td class="chart-window-cell">📋 ${calculatedWindow}</td>
-                    <td style="text-align: center;"><button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov</button></td>
+                    <td style="text-align: center;">
+                        <button class="chk-btn" onclick="checkPnrOfficialGov('${record.pnr}')">🏛️ Live Gov</button>
+                    </td>
                     <td>
                         <select class="status-select" onchange="updateRealtimeStatus('${record.pnr}', this.value)">
                             <option value="Pending" ${record.status === 'Pending' ? 'selected' : ''}>⌛ Pending</option>
@@ -323,16 +334,21 @@
                             <option value="Regret" ${record.status === 'Regret' ? 'selected' : ''}>❌ Regret</option>
                         </select>
                     </td>
-                    <td style="text-align: center;"><button class="action-btn" onclick="deleteRealtimeRecord('${record.pnr}')">Delete</button></td>
+                    <td style="text-align: center;">
+                        <button class="action-btn" onclick="deleteRealtimeRecord('${record.pnr}')">Delete</button>
+                    </td>
                 </tr>`;
                 tbody.innerHTML += row;
             });
+        }, (error) => {
+            console.error("Realtime stream disconnected: ", error);
         });
     }
 
     function handleManualSubmit() {
         const pnr = document.getElementById("pnr").value;
         if (pnr.length !== 10) { alert("Please input a valid 10-digit PNR."); return; }
+
         const record = {
             pnr: pnr,
             trainNo: document.getElementById("trainNo").value,
@@ -347,20 +363,32 @@
             chartDepTime: document.getElementById("chartDepTime").value,
             status: document.getElementById("status").value
         };
-        database.ref('eq_requests/' + pnr).set(record).then(() => { clearForm(); showNotification("Saved."); });
+
+        database.ref('eq_requests/' + pnr).set(record).then(() => {
+            clearForm();
+            showNotification("Manual request successfully stored.");
+        });
     }
 
-    function updateRealtimeStatus(pnr, newStatus) { database.ref('eq_requests/' + pnr).update({ status: newStatus }); }
-    function deleteRealtimeRecord(pnr) { if (confirm("Delete entry?")) { database.ref('eq_requests/' + pnr).remove(); } }
+    function updateRealtimeStatus(pnr, newStatus) {
+        database.ref('eq_requests/' + pnr).update({ status: newStatus });
+    }
+
+    function deleteRealtimeRecord(pnr) {
+        if (confirm("Permanently delete this entry?")) {
+            database.ref('eq_requests/' + pnr).remove();
+        }
+    }
 
     function calculateChartPrepTime(chartDepTimeStr) {
-        if (!chartDepTimeStr || chartDepTimeStr === 'Not Set' || chartDepTimeStr === 'PENDING' || chartDepTimeStr === 'Pending') return 'Awaiting Dep Time';
+        if (!chartDepTimeStr || chartDepTimeStr === 'Not Set' || chartDepTimeStr === 'PENDING') return 'Awaiting Dep Time';
         const timeParts = chartDepTimeStr.trim().split(':');
         if (timeParts.length < 2) return 'Invalid Format';
         const hours = parseInt(timeParts[0], 10);
         const minutes = parseInt(timeParts[1], 10);
         if (hours >= 5 && hours < 14) return 'Prev Day by 21:00';
-        let targetHours = hours - 10; let dayContext = 'Same Day';
+        let targetHours = hours - 10;
+        let dayContext = 'Same Day';
         if (targetHours < 0) { targetHours = 24 + targetHours; dayContext = 'Prev Day'; }
         return `${dayContext} ${String(targetHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} hrs`;
     }
@@ -376,7 +404,7 @@
 
     function checkPnrOfficialGov(pnrNum) {
         navigator.clipboard.writeText(pnrNum).then(() => {
-            alert("PNR copied! Opening portal.");
+            alert("PNR " + pnrNum + " copied to clipboard!\n\nOpening official Indian Railways Enquiry portal.");
             window.open("https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html?locale=en", "_blank");
         });
     }
