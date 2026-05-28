@@ -19,11 +19,11 @@
             background-color: var(--secondary);
             color: var(--text);
             margin: 0;
-            padding: 8px; /* Compact margin to maximize screen estate */
+            padding: 8px; /* Extremely tight margins to reclaim screen space */
         }
         .container {
             width: 100%;
-            max-width: 100%; /* Expands full edge-to-edge width of monitor */
+            max-width: 100%; /* Spans full edge-to-edge width of monitor */
             box-sizing: border-box;
             background: #fff;
             padding: 12px;
@@ -51,7 +51,7 @@
 
         .form-group {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); /* Maximized input packing density */
             gap: 6px;
             margin-bottom: 12px;
             background: #f1f3f5;
@@ -83,12 +83,13 @@
         button:hover { opacity: 0.9; }
         .btn-clear { background-color: #6c757d; }
         
-        /* Ultra-Condensed Table Styles for Single Screen Visibility */
+        /* Ultra-Condensed Compact Table Styles */
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; margin-top: 5px; }
         th, td { padding: 4px 5px; border: 1px solid var(--border); vertical-align: middle; line-height: 1.2; }
         th { background-color: var(--primary); color: white; white-space: nowrap; font-size: 11px; font-weight: 600; }
         tr:hover { background-color: #f8f9fa; }
         
+        /* Layout Constraints to Prevent Column Ballooning */
         .nowrap-cell { white-space: nowrap; }
         .passenger-cell { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
         .chart-window-cell { min-width: 140px; color: #1b5e20; font-weight: bold; font-size: 10.5px; }
@@ -127,7 +128,7 @@
         .sync-indicator { font-size: 11px; color: var(--cloud-color); font-weight: bold; float: right; }
     </style>
 
-    <!-- FIREBASE PLATFORM MODULE CLIENTS -->
+    <!-- FIREBASE COMPAT CORE MODULES -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
@@ -139,7 +140,7 @@
     
     <div id="notifBar" class="notification"></div>
     
-    <!-- Input Form -->
+    <!-- Ultra-Low Height Input Form Layout -->
     <div class="form-group" id="eqForm">
         <div>
             <label>PNR Number</label>
@@ -199,7 +200,7 @@
         </div>
     </div>
 
-    <!-- Wide Data Table Grid -->
+    <!-- Edge-to-Edge Data Grid Matrix -->
     <table id="recordsTable">
         <thead>
             <tr>
@@ -221,12 +222,13 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- Cloud Rows Auto Sorted Chronologically -->
+            <!-- Dynamic Realtime Rows Loaded and Chronologically Ordered Automatically -->
         </tbody>
     </table>
 </div>
 
 <script>
+    // ACTIVE SYSTEM KEYS CONFIGURATION MAP
     const firebaseConfig = {
         apiKey: "AIzaSyCkNA0lawZPrHMg59whHSgIji3ulXq_Wmg",
         authDomain: "eq-tracker-83c3c.firebaseapp.com",
@@ -246,28 +248,19 @@
         listenToRealtimeSync();
     });
 
-    // ORIGINAL PARAMETER PARSER REVERTED BACK
     function parseUrlParameters() {
         const params = new URLSearchParams(window.location.search);
         if (params.has('pnr')) {
             const pnr = params.get('pnr') || '';
-            
-            // Replaces underscores back into spaces for pristine display rendering
-            const rawPassenger = params.get('passenger') || '';
-            const cleanPassenger = rawPassenger.replace(/_/g, ' ');
-            
-            const rawTrainName = params.get('trainName') || '';
-            const cleanTrainName = rawTrainName.replace(/_/g, ' ');
-
             const record = {
                 pnr: pnr,
                 trainNo: params.get('trainNo') || '',
-                trainName: cleanTrainName,
+                trainName: params.get('trainName') || '',
                 originDiv: params.get('originDiv') || '',
                 bStation: params.get('bStation') || '',
                 jDate: params.get('jDate') || '',
                 depTime: params.get('depTime') || '',
-                passenger: cleanPassenger,
+                passenger: params.get('passenger') || '',
                 chartStation: params.get('chartStation') || '',
                 chartDiv: params.get('chartDiv') || '',
                 chartDepTime: params.get('chartDepTime') || '',
@@ -277,8 +270,8 @@
             if (pnr.length === 10) {
                 database.ref('eq_requests/' + pnr).set(record)
                 .then(() => {
-                    showNotification("Successfully synced dynamic entry via safe URL parameter routing!");
-                }).catch(err => console.error("Realtime sync failed:", err));
+                    showNotification("Successfully synced dynamic entry to Cloud stream!");
+                }).catch(err => console.error("Database storage drop error:", err));
             }
             window.history.replaceState({}, document.title, window.location.pathname);
         }
@@ -294,8 +287,9 @@
                 recordsList.push(childSnapshot.val());
             });
 
-            // CHRONOLOGICAL AUTOMATIC SORTING LOOP:
-            // Elevates the newest Journey Date to the top, then sorts by Departure Time.
+            // CHRONOLOGICAL CHANNELD SORTING LOOP: 
+            // Evaluates Journey Date first, then falls back to Departure Time string indexes.
+            // Arranges the latest timeline entries at index 1 (Top), pushing older timestamps down.
             recordsList.sort((a, b) => {
                 const dateA = a.jDate || "0000-00-00";
                 const dateB = b.jDate || "0000-00-00";
@@ -341,7 +335,7 @@
                 tbody.innerHTML += row;
             });
         }, (error) => {
-            console.error("Realtime stream disconnected: ", error);
+            console.error("Realtime listener synchronization broken: ", error);
         });
     }
 
@@ -366,7 +360,7 @@
 
         database.ref('eq_requests/' + pnr).set(record).then(() => {
             clearForm();
-            showNotification("Manual request successfully stored.");
+            showNotification("Manual entry locked into synchronized ledger.");
         });
     }
 
@@ -375,7 +369,7 @@
     }
 
     function deleteRealtimeRecord(pnr) {
-        if (confirm("Permanently delete this entry?")) {
+        if (confirm("Permanently delete this entry across all synchronized devices?")) {
             database.ref('eq_requests/' + pnr).remove();
         }
     }
